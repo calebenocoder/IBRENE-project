@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import logo from '../assets/logo.png';
 
 interface Course {
   id: string; // Supabase uses UUID strings
@@ -75,16 +76,71 @@ export const Dashboard: React.FC = () => {
     fetchData();
   }, [navigate]);
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/');
+  };
+
   if (loading) {
     return (
-      <div className="dashboard-page flex items-center justify-center">
-        <p style={{ color: '#333', fontSize: '1.2rem' }}>Carregando seus cursos...</p>
+      <div className="dashboard-loading">
+        <div className="loading-content">
+          <div className="spinner"></div>
+          <p>Carregando seus cursos...</p>
+        </div>
+        <style>{`
+          .dashboard-loading {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+          }
+
+          .loading-content {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+          }
+
+          .dashboard-loading p {
+            color: #0f172a;
+            font-size: 1.25rem;
+            font-weight: 500;
+          }
+
+          .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+          }
+
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     );
   }
 
   return (
     <div className="dashboard-page">
+      {/* Fixed Header with Logo and Logout */}
+      <div className="dashboard-top-header">
+        <div className="dashboard-top-container">
+          <Link to="/" className="dashboard-logo">
+            <img src={logo} alt="IBRENE Logo" />
+          </Link>
+          <button className="btn-logout" onClick={handleLogout}>Sair</button>
+        </div>
+      </div>
+
       <div className="dashboard-container">
         <header className="dashboard-header">
           <div>
@@ -140,11 +196,55 @@ export const Dashboard: React.FC = () => {
       <style>{`
         .dashboard-page {
           min-height: 100vh;
-          padding-top: 100px; /* Space for navbar */
+          padding-top: 140px; /* Space for navbar */
           padding-bottom: 40px;
           background-color: #f5f5f7; /* Solid off-white background */
           position: relative;
           z-index: 1; /* Ensure it sits on top of the fixed body background */
+        }
+
+        .dashboard-top-header {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          z-index: 1001;
+          background: white;
+          border-bottom: 1px solid #e2e8f0;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .dashboard-top-container {
+          max-width: 1400px;
+          margin: 0 auto;
+          padding: 1rem 2rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .dashboard-logo img {
+          height: 40px;
+          width: auto;
+          display: block;
+        }
+
+        .btn-logout {
+          background: #007bff;
+          color: white;
+          border: none;
+          padding: 10px 24px;
+          border-radius: 8px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          font-size: 0.95rem;
+        }
+
+        .btn-logout:hover {
+          background: #0056b3;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
         }
 
         .dashboard-container {

@@ -39,13 +39,16 @@ export const TestEditor: React.FC<TestEditorProps> = ({
 }) => {
     const [title, setTitle] = useState(lesson?.title || '');
     const [questions, setQuestions] = useState<Question[]>([]);
+    const [passingPercentage, setPassingPercentage] = useState(70);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [testId, setTestId] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         if (lesson) {
-            fetchTestData();
+            setLoading(true);
+            fetchTestData().finally(() => setLoading(false));
         } else {
             // Start with one empty question
             addQuestion();
@@ -55,36 +58,46 @@ export const TestEditor: React.FC<TestEditorProps> = ({
     const fetchTestData = async () => {
         if (!lesson) return;
 
-        // Fetch test
-        const { data: testData } = await supabase
-            .from('tests')
-            .select('*')
-            .eq('lesson_id', lesson.id)
-            .single();
+        try {
+            // Fetch test
+            const { data: testData } = await supabase
+                .from('tests')
+                .select('*')
+                .eq('lesson_id', lesson.id)
+                .single();
 
-        if (testData) {
-            setTestId(testData.id);
+            if (testData) {
+                setTestId(testData.id);
+                setPassingPercentage(testData.passing_percentage || 70);
 
-            // Fetch questions and alternatives
-            const { data: questionsData } = await supabase
-                .from('questions')
-                .select(`
-          *,
-          alternatives (*)
-        `)
-                .eq('test_id', testData.id)
-                .order('order_index');
+                // Fetch questions with the correct test_id
+                const { data: questionsData } = await supabase
+                    .from('questions')
+                    .select(`
+                        *,
+                        alternatives (*)
+                    `)
+                    .eq('test_id', testData.id)
+                    .order('order_index');
 
-            if (questionsData) {
-                const formattedQuestions = questionsData.map((q: any) => ({
-                    id: q.id,
-                    title: q.title,
-                    description: q.description,
-                    order_index: q.order_index,
-                    alternatives: (q.alternatives || []).sort((a: any, b: any) => a.order_index - b.order_index)
-                }));
-                setQuestions(formattedQuestions);
+                if (questionsData && questionsData.length > 0) {
+                    const formattedQuestions = questionsData.map((q: any) => ({
+                        id: q.id,
+                        title: q.title,
+                        description: q.description,
+                        order_index: q.order_index,
+                        alternatives: (q.alternatives || []).sort((a: any, b: any) => a.order_index - b.order_index)
+                    }));
+                    setQuestions(formattedQuestions);
+                } else {
+                    // Start with one empty question if no questions exist
+                    addQuestion();
+                }
             }
+        } catch (error) {
+            console.error('Error fetching test data:', error);
+            // Start with one empty question on error
+            addQuestion();
         }
     };
 
@@ -223,7 +236,8 @@ export const TestEditor: React.FC<TestEditorProps> = ({
                     .from('tests')
                     .insert([{
                         lesson_id: currentLessonId,
-                        title
+                        title,
+                        passing_percentage: passingPercentage
                     }])
                     .select()
                     .single();
@@ -233,7 +247,10 @@ export const TestEditor: React.FC<TestEditorProps> = ({
             } else {
                 await supabase
                     .from('tests')
-                    .update({ title })
+                    .update({
+                        title,
+                        passing_percentage: passingPercentage
+                    })
                     .eq('id', currentTestId);
 
                 // Delete existing questions (cascade will delete alternatives)
@@ -283,120 +300,172 @@ export const TestEditor: React.FC<TestEditorProps> = ({
 
     return (
         <div className="test-editor">
-            <div className="editor-header">
-                <h2>{lesson ? 'Editar Questionário' : 'Novo Questionário'}</h2>
-            </div>
-
-            <div className="editor-form">
-                <div className="form-group">
-                    <label htmlFor="test-title">Título do Questionário *</label>
-                    <input
-                        id="test-title"
-                        type="text"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        placeholder="Ex: Avaliação - Módulo 1"
-                    />
+            {loading ? (
+                <div className="loading-state">
+                    <div className="spinner"></div>
+                    <p>Carregando questionário...</p>
                 </div>
-
-                <div className="questions-section">
-                    <div className="section-header">
-                        <h3>Questões</h3>
-                        <button className="btn-add-question" onClick={addQuestion}>
-                            + Adicionar Questão
-                        </button>
+            ) : (
+                <>
+                    <div className="editor-header">
+                        <h2>{lesson ? 'Editar Questionário' : 'Novo Questionário'}</h2>
                     </div>
 
-                    {questions.map((question, qIndex) => (
-                        <div key={qIndex} className="question-card">
-                            <div className="question-header">
-                                <span className="question-number">Questão {qIndex + 1}</span>
-                                {questions.length > 1 && (
-                                    <button
-                                        className="btn-remove"
-                                        onClick={() => removeQuestion(qIndex)}
-                                    >
-                                        🗑️ Remover
-                                    </button>
-                                )}
+                    <div className="editor-form">
+                        <div className="form-group">
+                            <label htmlFor="test-title">Título do Questionário *</label>
+                            <input
+                                id="test-title"
+                                type="text"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                placeholder="Ex: Avaliação - Módulo 1"
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="passing-percentage">Percentual Mínimo para Aprovação (%) *</label>
+                            <input
+                                id="passing-percentage"
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={passingPercentage}
+                                onChange={(e) => setPassingPercentage(Math.max(0, Math.min(100, parseInt(e.target.value) || 0)))}
+                                placeholder="70"
+                            />
+                            <small style={{ color: '#64748b', fontSize: '0.85rem' }}>Defina a nota mínima necessária para o aluno ser aprovado (0-100%)</small>
+                        </div>
+
+                        <div className="questions-section">
+                            <div className="section-header">
+                                <h3>Questões</h3>
+                                <button className="btn-add-question" onClick={addQuestion}>
+                                    + Adicionar Questão
+                                </button>
                             </div>
 
-                            <div className="form-group">
-                                <label>Pergunta *</label>
-                                <input
-                                    type="text"
-                                    value={question.title}
-                                    onChange={(e) => updateQuestion(qIndex, 'title', e.target.value)}
-                                    placeholder="Digite a pergunta..."
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label>Descrição (opcional)</label>
-                                <textarea
-                                    value={question.description || ''}
-                                    onChange={(e) => updateQuestion(qIndex, 'description', e.target.value)}
-                                    placeholder="Contexto adicional para a questão..."
-                                    rows={2}
-                                />
-                            </div>
-
-                            <div className="alternatives-section">
-                                <label>Alternativas</label>
-                                {question.alternatives.map((alt, aIndex) => (
-                                    <div key={aIndex} className="alternative-row">
-                                        <input
-                                            type="radio"
-                                            name={`correct-${qIndex}`}
-                                            checked={alt.is_correct}
-                                            onChange={() => updateAlternative(qIndex, aIndex, 'is_correct', true)}
-                                            title="Marcar como correta"
-                                        />
-                                        <input
-                                            type="text"
-                                            value={alt.text}
-                                            onChange={(e) => updateAlternative(qIndex, aIndex, 'text', e.target.value)}
-                                            placeholder={`Alternativa ${String.fromCharCode(65 + aIndex)}`}
-                                            className="alternative-input"
-                                        />
-                                        {question.alternatives.length > 2 && (
+                            {questions.map((question, qIndex) => (
+                                <div key={qIndex} className="question-card">
+                                    <div className="question-header">
+                                        <span className="question-number">Questão {qIndex + 1}</span>
+                                        {questions.length > 1 && (
                                             <button
-                                                className="btn-remove-alt"
-                                                onClick={() => removeAlternative(qIndex, aIndex)}
+                                                className="btn-remove"
+                                                onClick={() => removeQuestion(qIndex)}
                                             >
-                                                ×
+                                                🗑️ Remover
                                             </button>
                                         )}
                                     </div>
-                                ))}
-                                {question.alternatives.length < 6 && (
-                                    <button
-                                        className="btn-add-alternative"
-                                        onClick={() => addAlternative(qIndex)}
-                                    >
-                                        + Adicionar Alternativa
-                                    </button>
-                                )}
-                            </div>
+
+                                    <div className="form-group">
+                                        <label>Pergunta *</label>
+                                        <input
+                                            type="text"
+                                            value={question.title}
+                                            onChange={(e) => updateQuestion(qIndex, 'title', e.target.value)}
+                                            placeholder="Digite a pergunta..."
+                                        />
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label>Descrição (opcional)</label>
+                                        <textarea
+                                            value={question.description || ''}
+                                            onChange={(e) => updateQuestion(qIndex, 'description', e.target.value)}
+                                            placeholder="Contexto adicional para a questão..."
+                                            rows={2}
+                                        />
+                                    </div>
+
+                                    <div className="alternatives-section">
+                                        <label>Alternativas</label>
+                                        {question.alternatives.map((alt, aIndex) => (
+                                            <div key={aIndex} className="alternative-row">
+                                                <input
+                                                    type="radio"
+                                                    name={`correct-${qIndex}`}
+                                                    checked={alt.is_correct}
+                                                    onChange={() => updateAlternative(qIndex, aIndex, 'is_correct', true)}
+                                                    title="Marcar como correta"
+                                                />
+                                                <input
+                                                    type="text"
+                                                    value={alt.text}
+                                                    onChange={(e) => updateAlternative(qIndex, aIndex, 'text', e.target.value)}
+                                                    placeholder={`Alternativa ${String.fromCharCode(65 + aIndex)}`}
+                                                    className="alternative-input"
+                                                />
+                                                {question.alternatives.length > 2 && (
+                                                    <button
+                                                        className="btn-remove-alt"
+                                                        onClick={() => removeAlternative(qIndex, aIndex)}
+                                                    >
+                                                        ×
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
+                                        {question.alternatives.length < 6 && (
+                                            <button
+                                                className="btn-add-alternative"
+                                                onClick={() => addAlternative(qIndex)}
+                                            >
+                                                + Adicionar Alternativa
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-                    ))}
-                </div>
 
-                {error && <div className="error-message">{error}</div>}
+                        {error && <div className="error-message">{error}</div>}
 
-                <div className="editor-actions">
-                    <button className="btn btn-cancel" onClick={onCancel}>
-                        Cancelar
-                    </button>
-                    <button className="btn btn-save" onClick={handleSave} disabled={saving}>
-                        {saving ? 'Salvando...' : 'Salvar Questionário'}
-                    </button>
-                </div>
-            </div>
+                        <div className="editor-actions">
+                            <button className="btn btn-cancel" onClick={onCancel}>
+                                Cancelar
+                            </button>
+                            <button className="btn btn-save" onClick={handleSave} disabled={saving}>
+                                {saving ? 'Salvando...' : 'Salvar Questionário'}
+                            </button>
+                        </div>
+                    </div>
+                </>
+            )}
 
             <style>{`
         .test-editor {
           max-width: 900px;
+        }
+
+        .loading-state {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 100px 20px;
+          gap: 20px;
+        }
+
+        .loading-state p {
+          color: #64748b;
+          font-size: 1.1rem;
+          font-weight: 500;
+        }
+
+        .spinner {
+          width: 48px;
+          height: 48px;
+          border: 4px solid #e2e8f0;
+          border-top: 4px solid #3b82f6;
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
 
         .editor-header {

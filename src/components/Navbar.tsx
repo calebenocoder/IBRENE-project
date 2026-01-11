@@ -129,17 +129,16 @@ export const Navbar: React.FC = () => {
           border-radius: 8px;
         }
 
-        /* When NOT scrolled (over image), make the logo white using CSS filters */
-        /* BUT exclude dashboard where we want normal logo */
-        .navbar:not(.scrolled):not(.navbar-dashboard) .logo img {
-          filter: brightness(0) invert(1);
-        }
-
         .logo img {
           height: 40px;
           width: auto;
           display: block;
           transition: all 0.3s ease;
+        }
+
+        /* Make logo white when navbar is transparent (not scrolled) */
+        .navbar:not(.scrolled) .logo img {
+          filter: brightness(0) invert(1);
         }
 
         .nav-links {

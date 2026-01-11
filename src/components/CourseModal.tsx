@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
 interface CourseModalProps {
@@ -25,6 +25,28 @@ export const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, onSav
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  // Update form data when course prop changes (for editing)
+  useEffect(() => {
+    if (course) {
+      setFormData({
+        title: course.title,
+        instructor: course.instructor,
+        description: course.description || '',
+        gradient_css: course.gradient_css,
+        published: course.published,
+      });
+    } else {
+      // Reset form for new course
+      setFormData({
+        title: '',
+        instructor: '',
+        description: '',
+        gradient_css: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        published: false,
+      });
+    }
+  }, [course, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -25,7 +25,7 @@ function App() {
   return (
     <>
       {!isDashboard && !isCoursePlayer && !isAdmin && <div className="global-hero-background" />}
-      {!isCoursePlayer && !location.pathname.includes('/admin/course/') && <Navbar />}
+      {!isDashboard && !isCoursePlayer && !location.pathname.includes('/admin/course/') && !isAdmin && <Navbar />}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />

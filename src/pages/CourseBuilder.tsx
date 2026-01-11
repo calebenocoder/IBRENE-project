@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import logo from '../assets/logo.png';
 import { ModuleManager } from '../components/admin/ModuleManager';
 import { LessonEditor } from '../components/admin/LessonEditor';
 import { TestEditor } from '../components/admin/TestEditor';
@@ -8,7 +9,6 @@ import { TestEditor } from '../components/admin/TestEditor';
 interface Module {
   id: string;
   title: string;
-  description?: string;
   order_index: number;
 }
 
@@ -31,6 +31,8 @@ export const CourseBuilder: React.FC = () => {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [editMode, setEditMode] = useState<'lesson' | 'test' | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [tempTitle, setTempTitle] = useState('');
 
   useEffect(() => {
     checkAdminAndFetchData();
@@ -91,6 +93,15 @@ export const CourseBuilder: React.FC = () => {
   };
 
   const handleLessonSelect = (lesson: Lesson) => {
+    // If no module is selected or the selected module is different from the lesson's module,
+    // find and select the correct module.
+    if (!selectedModule || selectedModule.id !== lesson.module_id) {
+      const parentModule = modules.find(m => m.id === lesson.module_id);
+      if (parentModule) {
+        setSelectedModule(parentModule);
+      }
+    }
+
     setSelectedLesson(lesson);
     setEditMode(lesson.content_type === 'quiz' ? 'test' : 'lesson');
   };
@@ -113,84 +124,161 @@ export const CourseBuilder: React.FC = () => {
     fetchModules();
   };
 
-  if (loading) {
-    return (
-      <div className="builder-loading">
-        <p>Carregando editor de curso...</p>
-      </div>
-    );
-  }
+  const handleModulesChange = (newModules?: any[]) => {
+    if (newModules) {
+      setModules(newModules);
+    }
+    fetchModules();
+  };
+
+  const handleStartEditTitle = () => {
+    setIsEditingTitle(true);
+    setTempTitle(courseTitle);
+  };
+
+  const handleSaveTitle = async () => {
+    if (!tempTitle.trim() || !courseId) return;
+
+    const { error } = await supabase
+      .from('courses')
+      .update({ title: tempTitle.trim() })
+      .eq('id', courseId);
+
+    if (!error) {
+      setCourseTitle(tempTitle.trim());
+      setIsEditingTitle(false);
+    }
+  };
+
+  const handleCancelEditTitle = () => {
+    setIsEditingTitle(false);
+    setTempTitle('');
+  };
+
+  useEffect(() => {
+    const handleAddLesson = () => {
+      setEditMode('lesson');
+    };
+
+    const handleAddQuiz = () => {
+      setEditMode('test');
+    };
+
+    window.addEventListener('addLesson', handleAddLesson);
+    window.addEventListener('addQuiz', handleAddQuiz);
+
+    return () => {
+      window.removeEventListener('addLesson', handleAddLesson);
+      window.removeEventListener('addQuiz', handleAddQuiz);
+    };
+  }, []);
 
   return (
-    <div className="course-builder">
-      <header className="builder-header">
-        <div className="header-content">
-          <Link to="/admin" className="back-link">← Voltar ao Admin</Link>
-          <h1>{courseTitle}</h1>
-          <p className="subtitle">Editor de Conteúdo</p>
+    <>
+      {loading ? (
+        <div className="builder-loading">
+          <div className="loading-content">
+            <div className="spinner"></div>
+            <p>Carregando editor de cursos...</p>
+          </div>
         </div>
-      </header>
-
-      <div className="builder-layout">
-        <aside className="modules-sidebar">
-          <ModuleManager
-            courseId={courseId!}
-            modules={modules}
-            onModulesChange={fetchModules}
-            onModuleSelect={handleModuleSelect}
-            onLessonSelect={handleLessonSelect}
-            selectedModuleId={selectedModule?.id}
-          />
-        </aside>
-
-        <main className="content-editor">
-          {!selectedModule && !editMode && (
-            <div className="empty-state">
-              <h2>Organize seu curso</h2>
-              <p>Crie módulos e adicione aulas para começar</p>
-            </div>
-          )}
-
-          {selectedModule && !editMode && (
-            <div className="module-actions">
-              <h2>{selectedModule.title}</h2>
-              <p>{selectedModule.description || 'Sem descrição'}</p>
-              <div className="action-buttons">
-                <button className="btn btn-primary" onClick={handleNewLesson}>
-                  + Nova Aula
-                </button>
-                <button className="btn btn-secondary" onClick={handleNewTest}>
-                  + Novo Questionário
-                </button>
+      ) : (
+        <div className="course-builder">
+          <header className="builder-header">
+            <div className="header-content">
+              <div className="header-left">
+                <Link to="/admin" className="back-link">← Voltar ao Admin</Link>
+                {isEditingTitle ? (
+                  <div className="title-edit-wrapper">
+                    <input
+                      type="text"
+                      className="title-input"
+                      value={tempTitle}
+                      onChange={(e) => setTempTitle(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSaveTitle();
+                        if (e.key === 'Escape') handleCancelEditTitle();
+                      }}
+                      autoFocus
+                    />
+                    <div className="title-edit-actions">
+                      <button className="btn-save-title" onClick={handleSaveTitle}>✓</button>
+                      <button className="btn-cancel-title" onClick={handleCancelEditTitle}>×</button>
+                    </div>
+                  </div>
+                ) : (
+                  <h1 className="editable-title" onClick={handleStartEditTitle} title="Clique para editar">
+                    {courseTitle}
+                    <span className="edit-icon">✎</span>
+                  </h1>
+                )}
+                <p className="subtitle">Editor de Conteúdo</p>
               </div>
+              <img src={logo} alt="IBRENE Logo" className="header-logo" />
             </div>
-          )}
+          </header>
 
-          {editMode === 'lesson' && selectedModule && (
-            <LessonEditor
-              moduleId={selectedModule.id}
-              lesson={selectedLesson}
-              onSave={handleSaveComplete}
-              onCancel={() => setEditMode(null)}
-            />
-          )}
+          <div className="builder-layout">
+            <aside className="modules-sidebar">
+              <ModuleManager
+                courseId={courseId!}
+                modules={modules}
+                onModulesChange={handleModulesChange}
+                onModuleSelect={handleModuleSelect}
+                onLessonSelect={handleLessonSelect}
+                selectedModuleId={selectedModule?.id}
+              />
+            </aside>
 
-          {editMode === 'test' && selectedModule && (
-            <TestEditor
-              moduleId={selectedModule.id}
-              lesson={selectedLesson}
-              onSave={handleSaveComplete}
-              onCancel={() => setEditMode(null)}
-            />
-          )}
-        </main>
-      </div>
+            <main className="content-editor">
+              {!selectedModule && !editMode && (
+                <div className="empty-state">
+                  <h2>Organize seu curso</h2>
+                  <p>Crie módulos e adicione aulas para começar</p>
+                </div>
+              )}
+
+              {selectedModule && !editMode && (
+                <div className="builder-module-header">
+                  <h2>{selectedModule.title}</h2>
+                  <div className="action-buttons">
+                    <button className="btn btn-primary" onClick={handleNewLesson}>
+                      + Nova Aula
+                    </button>
+                    <button className="btn btn-secondary" onClick={handleNewTest}>
+                      + Novo Questionário
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {editMode === 'lesson' && selectedModule && (
+                <LessonEditor
+                  moduleId={selectedModule.id}
+                  lesson={selectedLesson}
+                  onSave={handleSaveComplete}
+                  onCancel={() => setEditMode(null)}
+                />
+              )}
+
+              {editMode === 'test' && selectedModule && (
+                <TestEditor
+                  moduleId={selectedModule.id}
+                  lesson={selectedLesson}
+                  onSave={handleSaveComplete}
+                  onCancel={() => setEditMode(null)}
+                />
+              )}
+            </main>
+          </div>
+        </div>
+      )}
 
       <style>{`
         .course-builder {
           min-height: 100vh;
-          background: #f5f5f7;
-          padding-top: 160px; /* Increased to avoid header overlap */
+          background: #f8fafc;
+          padding-top: 220px; /* Increased to account for larger header */
         }
 
         .builder-header {
@@ -201,12 +289,22 @@ export const CourseBuilder: React.FC = () => {
           top: 0;
           left: 0;
           right: 0;
-          z-index: 1000; /* Increased z-index */
+          z-index: 1000;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
         }
 
         .header-content {
           max-width: 1400px;
           margin: 0 auto;
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+        }
+
+        .header-logo {
+          height: 40px;
+          object-fit: contain;
+          margin-top: 10px;
         }
 
         .back-link {
@@ -214,22 +312,104 @@ export const CourseBuilder: React.FC = () => {
           text-decoration: none;
           font-size: 0.9rem;
           margin-bottom: 12px;
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
+          display: block;
           transition: color 0.2s;
         }
 
         .back-link:hover {
-          color: #007bff;
+          color: #3b82f6;
         }
 
         .builder-header h1 {
           font-size: 2.25rem;
-          color: #1a1a1a;
+          color: #0f172a;
           margin-bottom: 8px;
           font-weight: 800;
           letter-spacing: -0.025em;
+        }
+
+        .editable-title {
+          cursor: pointer;
+          display: inline-block;
+          padding: 4px 12px;
+          margin-left: -12px;
+          border-radius: 8px;
+          transition: all 0.2s;
+          position: relative;
+        }
+
+        .editable-title:hover {
+          background: #f8fafc;
+        }
+
+        .edit-icon {
+          opacity: 0;
+          font-size: 1.2rem;
+          color: #64748b;
+          transition: opacity 0.2s;
+          margin-left: 8px;
+        }
+
+        .editable-title:hover .edit-icon {
+          opacity: 1;
+        }
+
+        .title-edit-wrapper {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .title-input {
+          font-size: 2.25rem;
+          color: #0f172a;
+          font-weight: 800;
+          letter-spacing: -0.025em;
+          border: 2px solid #3b82f6;
+          border-radius: 8px;
+          padding: 8px 16px;
+          background: white;
+          outline: none;
+          min-width: 400px;
+        }
+
+        .title-edit-actions {
+          display: flex;
+          gap: 8px;
+        }
+
+        .btn-save-title,
+        .btn-cancel-title {
+          width: 40px;
+          height: 40px;
+          border-radius: 8px;
+          border: none;
+          font-size: 1.5rem;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
+        }
+
+        .btn-save-title {
+          background: #22c55e;
+          color: white;
+        }
+
+        .btn-save-title:hover {
+          background: #16a34a;
+          transform: scale(1.1);
+        }
+
+        .btn-cancel-title {
+          background: #ef4444;
+          color: white;
+        }
+
+        .btn-cancel-title:hover {
+          background: #dc2626;
+          transform: scale(1.1);
         }
 
         .subtitle {
@@ -252,11 +432,11 @@ export const CourseBuilder: React.FC = () => {
           background: white;
           border-radius: 16px;
           padding: 24px;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
           height: fit-content;
           position: sticky;
-          top: 160px; /* Match course-builder padding-top */
-          max-height: calc(100vh - 200px);
+          top: 220px; /* Match course-builder padding-top */
+          max-height: calc(100vh - 260px);
           overflow-y: auto;
         }
 
@@ -264,7 +444,7 @@ export const CourseBuilder: React.FC = () => {
           background: white;
           border-radius: 16px;
           padding: 40px;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
           min-height: 600px;
         }
 
@@ -287,22 +467,26 @@ export const CourseBuilder: React.FC = () => {
 
         .empty-state h2 {
           font-size: 1.75rem;
-          color: #1a1a1a;
+          color: #0f172a;
           margin-bottom: 12px;
         }
 
-        .module-actions {
+        .builder-module-header {
           padding: 10px;
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+          align-items: flex-start;
         }
 
-        .module-actions h2 {
+        .builder-module-header h2 {
           font-size: 1.85rem;
-          color: #1a1a1a;
+          color: #0f172a;
           margin-bottom: 12px;
           font-weight: 700;
         }
 
-        .module-actions p {
+        .builder-module-header p {
           color: #64748b;
           margin-bottom: 40px;
           font-size: 1.1rem;
@@ -325,15 +509,15 @@ export const CourseBuilder: React.FC = () => {
         }
 
         .btn-primary {
-          background: #007bff;
+          background: #3b82f6;
           color: white;
-          box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
         }
 
         .btn-primary:hover {
-          background: #0056b3;
+          background: #2563eb;
           transform: translateY(-2px);
-          box-shadow: 0 6px 16px rgba(0, 123, 255, 0.3);
+          box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3);
         }
 
         .btn-secondary {
@@ -351,11 +535,37 @@ export const CourseBuilder: React.FC = () => {
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #64748b;
-          background: #f5f5f7;
-          font-size: 1.2rem;
+          background: #f8fafc;
+        }
+
+        .loading-content {
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 20px;
+        }
+
+        .builder-loading p {
+          color: #0f172a;
+          font-size: 1.25rem;
+          font-weight: 500;
+        }
+
+        .spinner {
+          width: 48px;
+          height: 48px;
+          border: 4px solid #e2e8f0;
+          border-top: 4px solid #3b82f6;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
       `}</style>
-    </div>
+    </>
   );
 };
