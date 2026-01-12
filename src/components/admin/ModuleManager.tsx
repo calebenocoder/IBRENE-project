@@ -42,6 +42,7 @@ interface ModuleManagerProps {
   onModuleSelect: (module: Module) => void;
   onLessonSelect: (lesson: Lesson) => void;
   selectedModuleId?: string;
+  selectedLessonId?: string;
 }
 
 export const ModuleManager: React.FC<ModuleManagerProps> = ({
@@ -50,7 +51,8 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({
   onModulesChange,
   onModuleSelect,
   onLessonSelect,
-  selectedModuleId
+  selectedModuleId,
+  selectedLessonId
 }) => {
   const [showAddModule, setShowAddModule] = useState(false);
   const [newModuleTitle, setNewModuleTitle] = useState('');
@@ -519,6 +521,7 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({
                           lesson={lesson}
                           onSelect={() => onLessonSelect(lesson)}
                           onDelete={() => handleDeleteLesson(lesson.id, module.id)}
+                          isSelected={lesson.id === selectedLessonId}
                         />
                       ))}
                       {(!moduleLessons[module.id] || moduleLessons[module.id].length === 0) && (
@@ -858,6 +861,16 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({
 
         .lesson-item:hover {
           background: #f1f5f9;
+        }
+
+        .lesson-item.selected {
+          background: #eff6ff;
+          color: #007bff;
+        }
+
+        .lesson-item.selected .lesson-title {
+          color: #007bff;
+          font-weight: 500;
         }
 
         .lesson-icon {

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
+import { AIQuizGenerator } from './AIQuizGenerator';
+import './TestEditor.css';
 
 interface Question {
     id?: string;
@@ -29,17 +31,20 @@ interface TestEditorProps {
     lesson: Lesson | null;
     onSave: () => void;
     onCancel: () => void;
+    courseId: string;
 }
 
 export const TestEditor: React.FC<TestEditorProps> = ({
     moduleId,
     lesson,
     onSave,
-    onCancel
+    onCancel,
+    courseId
 }) => {
     const [title, setTitle] = useState(lesson?.title || '');
     const [questions, setQuestions] = useState<Question[]>([]);
     const [passingPercentage, setPassingPercentage] = useState(70);
+    const [showAiModal, setShowAiModal] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [testId, setTestId] = useState<string | null>(null);
@@ -74,9 +79,9 @@ export const TestEditor: React.FC<TestEditorProps> = ({
                 const { data: questionsData } = await supabase
                     .from('questions')
                     .select(`
-                        *,
-                        alternatives (*)
-                    `)
+    *,
+    alternatives(*)
+        `)
                     .eq('test_id', testData.id)
                     .order('order_index');
 
@@ -261,14 +266,15 @@ export const TestEditor: React.FC<TestEditorProps> = ({
             }
 
             // Insert questions and alternatives
-            for (const question of questions) {
+            for (let i = 0; i < questions.length; i++) {
+                const question = questions[i];
                 const { data: questionData, error: questionError } = await supabase
                     .from('questions')
                     .insert([{
                         test_id: currentTestId,
                         title: question.title,
                         description: question.description || null,
-                        order_index: question.order_index
+                        order_index: i // Auto-assign index based on loop
                     }])
                     .select()
                     .single();
@@ -276,11 +282,11 @@ export const TestEditor: React.FC<TestEditorProps> = ({
                 if (questionError) throw questionError;
 
                 // Insert alternatives
-                const alternativesData = question.alternatives.map(alt => ({
+                const alternativesData = question.alternatives.map((alt, j) => ({
                     question_id: questionData.id,
                     text: alt.text,
                     is_correct: alt.is_correct,
-                    order_index: alt.order_index
+                    order_index: j // Auto-assign index based on map
                 }));
 
                 const { error: altError } = await supabase
@@ -311,7 +317,7 @@ export const TestEditor: React.FC<TestEditorProps> = ({
                         <h2>{lesson ? 'Editar Questionário' : 'Novo Questionário'}</h2>
                     </div>
 
-                    <div className="editor-form">
+                    <form className="editor-form" onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
                         <div className="form-group">
                             <label htmlFor="test-title">Título do Questionário *</label>
                             <input
@@ -340,7 +346,7 @@ export const TestEditor: React.FC<TestEditorProps> = ({
                         <div className="questions-section">
                             <div className="section-header">
                                 <h3>Questões</h3>
-                                <button className="btn-add-question" onClick={addQuestion}>
+                                <button type="button" className="btn-add-question" onClick={addQuestion}>
                                     + Adicionar Questão
                                 </button>
                             </div>
@@ -351,6 +357,7 @@ export const TestEditor: React.FC<TestEditorProps> = ({
                                         <span className="question-number">Questão {qIndex + 1}</span>
                                         {questions.length > 1 && (
                                             <button
+                                                type="button"
                                                 className="btn-remove"
                                                 onClick={() => removeQuestion(qIndex)}
                                             >
@@ -399,6 +406,7 @@ export const TestEditor: React.FC<TestEditorProps> = ({
                                                 />
                                                 {question.alternatives.length > 2 && (
                                                     <button
+                                                        type="button"
                                                         className="btn-remove-alt"
                                                         onClick={() => removeAlternative(qIndex, aIndex)}
                                                     >
@@ -409,6 +417,7 @@ export const TestEditor: React.FC<TestEditorProps> = ({
                                         ))}
                                         {question.alternatives.length < 6 && (
                                             <button
+                                                type="button"
                                                 className="btn-add-alternative"
                                                 onClick={() => addAlternative(qIndex)}
                                             >
@@ -423,271 +432,33 @@ export const TestEditor: React.FC<TestEditorProps> = ({
                         {error && <div className="error-message">{error}</div>}
 
                         <div className="editor-actions">
-                            <button className="btn btn-cancel" onClick={onCancel}>
+                            <button type="button" className="btn btn-secondary" onClick={() => setShowAiModal(true)}>
+                                ✨ Criar com I.A.
+                            </button>
+                            <button type="button" className="btn btn-cancel" onClick={onCancel}>
                                 Cancelar
                             </button>
-                            <button className="btn btn-save" onClick={handleSave} disabled={saving}>
+                            <button type="submit" className="btn btn-save" disabled={saving}>
                                 {saving ? 'Salvando...' : 'Salvar Questionário'}
                             </button>
                         </div>
-                    </div>
+                    </form>
+
+                    {showAiModal && (
+                        <AIQuizGenerator
+                            courseId={courseId}
+                            onClose={() => setShowAiModal(false)}
+                            onQuizGenerated={(newQuestions) => {
+                                setQuestions(newQuestions);
+                                if (!title) {
+                                    setTitle('Questionário Gerado por IA');
+                                }
+                                setShowAiModal(false);
+                            }}
+                        />
+                    )}
                 </>
             )}
-
-            <style>{`
-        .test-editor {
-          max-width: 900px;
-        }
-
-        .loading-state {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          padding: 100px 20px;
-          gap: 20px;
-        }
-
-        .loading-state p {
-          color: #64748b;
-          font-size: 1.1rem;
-          font-weight: 500;
-        }
-
-        .spinner {
-          width: 48px;
-          height: 48px;
-          border: 4px solid #e2e8f0;
-          border-top: 4px solid #3b82f6;
-          border-radius: 50%;
-          animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-
-        .editor-header {
-          margin-bottom: 32px;
-        }
-
-        .editor-header h2 {
-          font-size: 1.75rem;
-          color: #1a1a1a;
-        }
-
-        .editor-form {
-          display: flex;
-          flex-direction: column;
-          gap: 24px;
-        }
-
-        .form-group {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-
-        .form-group label {
-          font-weight: 600;
-          color: #334155;
-          font-size: 0.95rem;
-        }
-
-        .form-group input,
-        .form-group textarea {
-          padding: 12px 16px;
-          border: 1px solid #cbd5e1;
-          border-radius: 8px;
-          font-size: 1rem;
-          transition: all 0.2s;
-          font-family: inherit;
-        }
-
-        .form-group input:focus,
-        .form-group textarea:focus {
-          outline: none;
-          border-color: #007bff;
-          box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
-        }
-
-        .questions-section {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-        }
-
-        .section-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .section-header h3 {
-          font-size: 1.25rem;
-          color: #1a1a1a;
-        }
-
-        .btn-add-question {
-          background: #007bff;
-          color: white;
-          border: none;
-          padding: 10px 16px;
-          border-radius: 8px;
-          font-weight: 600;
-          cursor: pointer;
-          font-size: 0.9rem;
-          transition: all 0.2s;
-        }
-
-        .btn-add-question:hover {
-          background: #0056b3;
-          transform: translateY(-1px);
-        }
-
-        .question-card {
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
-          border-radius: 12px;
-          padding: 20px;
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-        }
-
-        .question-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .question-number {
-          font-weight: 700;
-          color: #007bff;
-          font-size: 1rem;
-        }
-
-        .btn-remove {
-          background: #fee;
-          color: #991b1b;
-          border: none;
-          padding: 6px 12px;
-          border-radius: 6px;
-          cursor: pointer;
-          font-size: 0.85rem;
-          transition: all 0.2s;
-        }
-
-        .btn-remove:hover {
-          background: #fee2e2;
-        }
-
-        .alternatives-section {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-
-        .alternative-row {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .alternative-row input[type="radio"] {
-          width: 20px;
-          height: 20px;
-          cursor: pointer;
-          flex-shrink: 0;
-        }
-
-        .alternative-input {
-          flex: 1;
-          padding: 10px 14px !important;
-          font-size: 0.95rem !important;
-        }
-
-        .btn-remove-alt {
-          background: #fee;
-          color: #991b1b;
-          border: none;
-          width: 32px;
-          height: 32px;
-          border-radius: 6px;
-          cursor: pointer;
-          font-size: 1.2rem;
-          line-height: 1;
-          flex-shrink: 0;
-        }
-
-        .btn-add-alternative {
-          background: white;
-          color: #475569;
-          border: 1px dashed #cbd5e1;
-          padding: 8px 12px;
-          border-radius: 6px;
-          cursor: pointer;
-          font-size: 0.9rem;
-          transition: all 0.2s;
-          margin-top: 4px;
-        }
-
-        .btn-add-alternative:hover {
-          background: #f8fafc;
-          border-color: #007bff;
-          color: #007bff;
-        }
-
-        .error-message {
-          background: #fee;
-          color: #c33;
-          padding: 12px;
-          border-radius: 8px;
-          font-size: 0.9rem;
-        }
-
-        .editor-actions {
-          display: flex;
-          gap: 12px;
-          justify-content: flex-end;
-          padding-top: 16px;
-          border-top: 1px solid #e2e8f0;
-        }
-
-        .btn {
-          padding: 12px 24px;
-          border-radius: 8px;
-          font-weight: 600;
-          cursor: pointer;
-          border: none;
-          transition: all 0.2s;
-        }
-
-        .btn-cancel {
-          background: #f1f5f9;
-          color: #475569;
-        }
-
-        .btn-cancel:hover {
-          background: #e2e8f0;
-        }
-
-        .btn-save {
-          background: #007bff;
-          color: white;
-        }
-
-        .btn-save:hover:not(:disabled) {
-          background: #0056b3;
-          transform: translateY(-1px);
-        }
-
-        .btn-save:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-      `}</style>
         </div>
     );
 };

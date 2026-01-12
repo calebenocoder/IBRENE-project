@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useNavigate, Link } from 'react-router-dom';
 import { CourseModal } from '../components/CourseModal';
+import { SiteManager } from '../components/admin/SiteManager';
 import logo from '../assets/logo.png';
 
 interface Course {
@@ -20,6 +21,7 @@ export const AdminDashboard: React.FC = () => {
   const [userName, setUserName] = useState('Administrador');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [activeTab, setActiveTab] = useState<'courses' | 'site'>('courses');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -107,11 +109,10 @@ export const AdminDashboard: React.FC = () => {
 
     if (error) {
       console.error('Error deleting course:', error);
-      alert('Erro ao excluir curso');
-      return;
+      alert('Erro ao excluir curso.');
+    } else {
+      await fetchCourses();
     }
-
-    await fetchCourses();
   };
 
   if (loading) {
@@ -119,7 +120,7 @@ export const AdminDashboard: React.FC = () => {
       <div className="admin-loading">
         <div className="loading-content">
           <div className="spinner"></div>
-          <p>Carregando painel administrativo...</p>
+          <p>Carregando...</p>
         </div>
         <style>{`
           .admin-loading {
@@ -162,211 +163,222 @@ export const AdminDashboard: React.FC = () => {
     );
   }
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate('/');
-  };
-
   return (
-    <div className="admin-page">
-      {/* Fixed Header with Logo and Logout */}
-      <div className="admin-top-header">
-        <div className="admin-top-container">
-          <Link to="/" className="admin-logo">
-            <img src={logo} alt="IBRENE Logo" />
-          </Link>
-          <button className="btn-logout" onClick={handleLogout}>Sair</button>
+    <div className="admin-dashboard">
+      <header className="dashboard-header">
+        <div className="header-container">
+          <div className="header-left">
+            <img src={logo} alt="IBRENE" className="dashboard-logo" />
+            <div className="header-divider"></div>
+            <h1>Painel Administrativo</h1>
+          </div>
+          <div className="header-right">
+            <span>Olá, <strong>{userName}</strong></span>
+            <Link to="/" className="link-home">Ver Site</Link>
+            <button
+              onClick={async () => { await supabase.auth.signOut(); navigate('/login'); }}
+              className="btn-logout"
+            >
+              Sair
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div className="tabs-container">
+        <div className="tabs-header">
+          <button
+            onClick={() => setActiveTab('courses')}
+            className={`tab-button ${activeTab === 'courses' ? 'active' : ''}`}
+          >
+            Gerenciar Cursos
+          </button>
+          <button
+            onClick={() => setActiveTab('site')}
+            className={`tab-button ${activeTab === 'site' ? 'active' : ''}`}
+          >
+            Gerenciar Site
+          </button>
         </div>
       </div>
 
-      <div className="admin-container">
-        <header className="admin-header">
-          <div>
-            <h1>Painel Administrativo</h1>
-            <p className="welcome-text">Bem-vindo, {userName}</p>
-          </div>
-          <div className="admin-badge">ADMIN</div>
-        </header>
-
-        <section className="manage-section">
-          <div className="section-header">
-            <h2 className="section-title">Gerenciar Cursos</h2>
-            <button className="btn-add" onClick={handleAddCourse}>
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M10 5v10M5 10h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-              Adicionar Curso
-            </button>
-          </div>
-
-          {courses.length === 0 ? (
-            <div className="empty-state">
-              <p>Nenhum curso cadastrado ainda.</p>
-              <button className="btn-primary" onClick={handleAddCourse}>
-                Criar Primeiro Curso
+      <main className="dashboard-content">
+        {activeTab === 'courses' && (
+          <div className="courses-tab">
+            <div className="section-header">
+              <div>
+                <h2>Cursos</h2>
+                <p>Gerencie os cursos disponíveis na plataforma.</p>
+              </div>
+              <button onClick={handleAddCourse} className="btn-primary">
+                + Novo Curso
               </button>
             </div>
-          ) : (
-            <div className="courses-table">
-              <div className="table-header">
-                <div className="col-title">Título</div>
-                <div className="col-instructor">Instrutor</div>
-                <div className="col-status">Status</div>
-                <div className="col-actions">Ações</div>
-              </div>
-              {courses.map((course) => (
-                <div key={course.id} className="table-row">
-                  <div className="col-title">
-                    <div
-                      className="course-color-indicator"
-                      style={{ background: course.gradient_css }}
-                    />
-                    <span className="course-title-text">{course.title}</span>
-                  </div>
-                  <div className="col-instructor">{course.instructor}</div>
-                  <div className="col-status">
-                    <span className={`status-badge ${course.published ? 'published' : 'draft'}`}>
-                      {course.published ? 'Publicado' : 'Rascunho'}
-                    </span>
-                  </div>
-                  <div className="col-actions">
-                    <button
-                      className="btn-icon btn-manage"
-                      onClick={() => navigate(`/admin/course/${course.id}/builder`)}
-                      title="Gerenciar conteúdo (Aulas/Módulos)"
-                    >
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zM2.5 2a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zM9 2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zM9 4.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zM9 6.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zM1 9.5A1.5 1.5 0 0 1 2.5 8h3A1.5 1.5 0 0 1 7 9.5v3A1.5 1.5 0 0 1 5.5 14h-3A1.5 1.5 0 0 1 1 12.5v-3zM2.5 9a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zM9 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zM9 11.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zM9 13.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z" />
-                      </svg>
-                    </button>
-                    <button
-                      className="btn-icon btn-edit"
-                      onClick={() => handleEditCourse(course)}
-                      title="Editar detalhes do curso"
-                    >
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M12.854 1.146a.5.5 0 0 0-.708 0L10.5 2.793 13.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708l-2-2zM9.793 3.5L3.293 10H3v.293l-.146.853.853-.146L10 4.707 9.793 3.5zM3 11h.707l6.647-6.647L7.707 1.707 1.06 8.354A.5.5 0 0 0 1 8.707V11.5a.5.5 0 0 0 .5.5H3z" />
-                      </svg>
-                    </button>
-                    <button
-                      className="btn-icon btn-delete"
-                      onClick={() => handleDeleteCourse(course.id)}
-                      title="Excluir curso"
-                    >
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" />
-                        <path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-      </div>
 
-      <CourseModal
-        isOpen={modalOpen}
-        onClose={handleModalClose}
-        onSave={handleModalSave}
-        course={editingCourse}
-      />
+            {courses.length === 0 ? (
+              <div className="empty-courses">
+                <h3>Nenhum curso cadastrado</h3>
+                <p>Comece criando o primeiro curso da plataforma.</p>
+                <button onClick={handleAddCourse} className="btn-primary mt-4">
+                  Criar Curso
+                </button>
+              </div>
+            ) : (
+              <div className="courses-grid">
+                {courses.map((course) => (
+                  <div key={course.id} className="course-card">
+                    <div className="course-banner" style={{ background: course.gradient_css || 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' }}></div>
+                    <div className="course-info">
+                      <div className="course-header-row">
+                        <h3>{course.title}</h3>
+                        <span className={`status-badge ${course.published ? 'published' : 'draft'}`}>
+                          {course.published ? 'Publicado' : 'Rascunho'}
+                        </span>
+                      </div>
+                      <p className="instructor">{course.instructor}</p>
+
+                      <div className="course-actions">
+                        <Link to={`/admin/course/${course.id}/builder`} className="btn-action primary">
+                          Editar Conteúdo
+                        </Link>
+                        <button onClick={() => handleEditCourse(course)} className="btn-action secondary">
+                          Config
+                        </button>
+                        <button onClick={() => handleDeleteCourse(course.id)} className="btn-action danger">
+                          Excluir
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'site' && <SiteManager />}
+      </main>
+
+      {modalOpen && (
+        <CourseModal
+          isOpen={modalOpen}
+          onClose={handleModalClose}
+          onSave={handleModalSave}
+          course={editingCourse}
+        />
+      )}
 
       <style>{`
-        .admin-page {
+        .admin-dashboard {
           min-height: 100vh;
-          padding-top: 140px;
-          padding-bottom: 40px;
-          background-color: #f5f5f7;
+          background-color: #f8fafc;
+          display: flex;
+          flex-direction: column;
         }
 
-        .admin-top-header {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          z-index: 1001;
+        .dashboard-header {
           background: white;
           border-bottom: 1px solid #e2e8f0;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+          position: sticky;
+          top: 0;
+          z-index: 100;
         }
 
-        .admin-top-container {
-          max-width: 1400px;
+        .header-container {
+          max-width: 1280px;
           margin: 0 auto;
-          padding: 1rem 2rem;
+          padding: 0 1.5rem;
+          height: 4rem;
           display: flex;
           justify-content: space-between;
           align-items: center;
         }
 
-        .admin-logo img {
-          height: 40px;
+        .header-left {
+          display: flex;
+          align-items: center;
+        }
+
+        .dashboard-logo {
+          height: 2rem;
           width: auto;
-          display: block;
+        }
+
+        .header-divider {
+          height: 1.5rem;
+          width: 1px;
+          background-color: #e2e8f0;
+          margin: 0 1rem;
+        }
+
+        .header-left h1 {
+          font-size: 1.25rem;
+          font-weight: 700;
+          color: #1f2937;
+        }
+
+        .header-right {
+          display: flex;
+          align-items: center;
+          gap: 1.5rem;
+          font-size: 0.875rem;
+          color: #4b5563;
+        }
+
+        .link-home {
+          color: #2563eb;
+          font-weight: 500;
         }
 
         .btn-logout {
-          background: #007bff;
-          color: white;
-          border: none;
-          padding: 10px 24px;
-          border-radius: 8px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s;
-          font-size: 0.95rem;
+          color: #6b7280;
+          font-weight: 500;
+          background: none;
         }
+        .btn-logout:hover { color: #dc2626; }
 
-        .btn-logout:hover {
-          background: #0056b3;
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-        }
-
-        .admin-container {
-          width: 90%;
-          max-width: 1200px;
-          margin: 0 auto;
-        }
-
-        .admin-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 3rem;
-          background: rgba(255, 255, 255, 0.95);
-          padding: 2rem;
-          border-radius: 16px;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-        }
-
-        .admin-header h1 {
-          font-size: 2rem;
-          color: #1a1a1a;
-          margin-bottom: 0.5rem;
-        }
-
-        .welcome-text {
-          color: #666;
-        }
-
-        .admin-badge {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          padding: 8px 16px;
-          border-radius: 20px;
-          font-weight: 700;
-          font-size: 0.85rem;
-          letter-spacing: 0.5px;
-        }
-
-        .manage-section {
+        /* Tabs */
+        .tabs-container {
           background: white;
-          border-radius: 16px;
-          padding: 2rem;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+          border-bottom: 1px solid #e2e8f0;
+          box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .tabs-header {
+          max-width: 1280px;
+          margin: 0 auto;
+          padding: 0 1.5rem;
+          display: flex;
+          gap: 2rem;
+        }
+
+        .tab-button {
+          padding: 1rem 0.25rem;
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: #6b7280;
+          background: none;
+          border-bottom: 2px solid transparent;
+          transition: all 0.2s;
+        }
+
+        .tab-button:hover {
+          color: #374151;
+          border-bottom-color: #d1d5db;
+        }
+
+        .tab-button.active {
+          color: #2563eb;
+          border-bottom-color: #2563eb;
+        }
+
+        /* Content */
+        .dashboard-content {
+          flex: 1;
+          max-width: 1280px;
+          width: 100%;
+          margin: 0 auto;
+          padding: 2rem 1.5rem;
         }
 
         .section-header {
@@ -376,198 +388,151 @@ export const AdminDashboard: React.FC = () => {
           margin-bottom: 2rem;
         }
 
-        .section-title {
+        .section-header h2 {
           font-size: 1.5rem;
-          color: #1a1a1a;
-          font-weight: 600;
+          font-weight: 700;
+          color: #111827;
         }
 
-        .btn-add {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          background: #007bff;
-          color: white;
-          border: none;
-          padding: 12px 20px;
-          border-radius: 8px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .btn-add:hover {
-          background: #0056b3;
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-        }
-
-        .empty-state {
-          text-align: center;
-          padding: 4rem 2rem;
-          color: #666;
-        }
-
-        .empty-state p {
-          margin-bottom: 1.5rem;
-          font-size: 1.1rem;
+        .section-header p {
+          color: #6b7280;
+          font-size: 0.875rem;
+          margin-top: 0.25rem;
         }
 
         .btn-primary {
-          background: #007bff;
+          background-color: #2563eb;
           color: white;
-          border: none;
-          padding: 12px 24px;
-          border-radius: 8px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s;
+          padding: 0.5rem 1rem;
+          border-radius: 0.375rem;
+          font-weight: 500;
+          font-size: 0.875rem;
+          box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         }
+        .btn-primary:hover { background-color: #1d4ed8; }
 
-        .btn-primary:hover {
-          background: #0056b3;
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-        }
-
-        .courses-table {
-          display: flex;
-          flex-direction: column;
-          gap: 1px;
-          background: #e2e8f0;
-          border-radius: 12px;
-          overflow: hidden;
-        }
-
-        .table-header,
-        .table-row {
+        /* Grid */
+        .courses-grid {
           display: grid;
-          grid-template-columns: 2fr 1.5fr 1fr 180px;
-          gap: 16px;
-          padding: 16px 20px;
+          grid-template-columns: repeat(1, 1fr);
+          gap: 1.5rem;
+        }
+        @media (min-width: 640px) { .courses-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 1024px) { .courses-grid { grid-template-columns: repeat(3, 1fr); } }
+
+        .course-card {
           background: white;
-          align-items: center;
+          border-radius: 0.5rem;
+          border: 1px solid #f3f4f6;
+          overflow: hidden;
+          box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+          transition: box-shadow 0.2s;
         }
+        .course-card:hover { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
 
-        .table-header {
-          background: #f8fafc;
-          font-weight: 700;
-          font-size: 0.85rem;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          color: #64748b;
-        }
+        .course-banner { height: 8rem; width: 100%; }
+        .course-info { padding: 1.25rem; }
 
-        .table-row {
-          transition: all 0.2s;
-        }
-
-        .table-row:hover {
-          background: #f8fafc;
-        }
-
-        .col-title {
+        .course-header-row {
           display: flex;
-          align-items: center;
-          gap: 12px;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 0.25rem;
         }
 
-        .course-color-indicator {
-          width: 32px;
-          height: 32px;
-          border-radius: 8px;
-          flex-shrink: 0;
-        }
-
-        .course-title-text {
-          font-weight: 600;
-          color: #1a1a1a;
-        }
-
-        .col-instructor {
-          color: #475569;
+        .course-header-row h3 {
+          font-size: 1.125rem;
+          font-weight: 500;
+          color: #111827;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .status-badge {
-          display: inline-block;
-          padding: 4px 12px;
-          border-radius: 12px;
-          font-size: 0.8rem;
-          font-weight: 600;
+          font-size: 0.75rem;
+          font-weight: 500;
+          padding: 0.125rem 0.625rem;
+          border-radius: 9999px;
         }
+        .status-badge.published { background-color: #dcfce7; color: #166534; }
+        .status-badge.draft { background-color: #fef9c3; color: #854d0e; }
 
-        .status-badge.published {
-          background: #d1fae5;
-          color: #065f46;
-        }
+        .instructor { color: #6b7280; font-size: 0.875rem; margin-bottom: 1.5rem; }
 
-        .status-badge.draft {
-          background: #fee;
-          color: #991b1b;
-        }
-
-        .col-actions {
+        .course-actions {
           display: flex;
-          gap: 8px;
-          justify-content: flex-end;
+          gap: 0.75rem;
         }
 
-        .btn-icon {
-          width: 36px;
-          height: 36px;
-          border-radius: 8px;
-          border: none;
-          cursor: pointer;
-          display: flex;
+        .btn-action {
+          display: inline-flex;
           align-items: center;
           justify-content: center;
-          transition: all 0.2s;
+          padding: 0.5rem 0.75rem;
+          font-size: 0.875rem;
+          font-weight: 500;
+          border-radius: 0.375rem;
         }
 
-        .btn-manage {
-          background: #f0fdf4;
-          color: #166534;
+        .btn-action.primary {
+          flex: 1;
+          background-color: #2563eb;
+          color: white;
+        }
+        .btn-action.primary:hover { background-color: #1d4ed8; }
+
+        .btn-action.secondary {
+          background-color: white;
+          color: #374151;
+          border: 1px solid #d1d5db;
+        }
+        .btn-action.secondary:hover { background-color: #f9fafb; }
+
+        .btn-action.danger {
+          background-color: #fee2e2;
+          color: #b91c1c;
+        }
+        .btn-action.danger:hover { background-color: #fecaca; }
+
+        .empty-courses {
+          text-align: center;
+          padding: 3rem;
+          background: white;
+          border: 1px dashed #e5e7eb;
+          border-radius: 0.5rem;
+        }
+        
+        .mt-4 { margin-top: 1rem; }
+
+        /* Loading Spinner */
+        .admin-loading {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+          background-color: #f8fafc;
+          flex-direction: column;
+          text-align: center;
         }
 
-        .btn-manage:hover {
-          background: #dcfce7;
-          transform: scale(1.1);
+        .admin-loading .spinner {
+          border: 4px solid rgba(0, 0, 0, 0.1);
+          border-left-color: #2563eb;
+          border-radius: 50%;
+          width: 3rem;
+          height: 3rem;
+          animation: spin 1s linear infinite;
+          margin-bottom: 1rem;
         }
 
-        .btn-edit {
-          background: #eff6ff;
-          color: #1e40af;
+        .admin-loading p {
+          color: #4b5563;
         }
 
-        .btn-edit:hover {
-          background: #dbeafe;
-          transform: scale(1.1);
-        }
-
-        .btn-delete {
-          background: #fef2f2;
-          color: #991b1b;
-        }
-
-        .btn-delete:hover {
-          background: #fee2e2;
-          transform: scale(1.1);
-        }
-
-        @media (max-width: 768px) {
-          .table-header,
-          .table-row {
-            grid-template-columns: 1fr;
-            gap: 8px;
-          }
-
-          .table-header {
-            display: none;
-          }
-
-          .col-actions {
-            justify-content: flex-start;
-          }
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
       `}</style>
     </div>

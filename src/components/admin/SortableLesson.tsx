@@ -14,12 +14,14 @@ interface SortableLessonProps {
     lesson: Lesson;
     onSelect: () => void;
     onDelete: () => void;
+    isSelected?: boolean;
 }
 
 export const SortableLesson: React.FC<SortableLessonProps> = ({
     lesson,
     onSelect,
     onDelete,
+    isSelected
 }) => {
     const {
         attributes,
@@ -46,7 +48,7 @@ export const SortableLesson: React.FC<SortableLessonProps> = ({
         <div
             ref={setNodeRef}
             style={style}
-            className="lesson-item"
+            className={`lesson-item ${isSelected ? 'selected' : ''}`}
             onClick={onSelect}
         >
             <span className="drag-handle-lesson" {...attributes} {...listeners}>⋮⋮</span>

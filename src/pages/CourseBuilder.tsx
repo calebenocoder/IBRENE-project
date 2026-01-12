@@ -227,6 +227,7 @@ export const CourseBuilder: React.FC = () => {
                 onModuleSelect={handleModuleSelect}
                 onLessonSelect={handleLessonSelect}
                 selectedModuleId={selectedModule?.id}
+                selectedLessonId={selectedLesson?.id}
               />
             </aside>
 
@@ -254,6 +255,7 @@ export const CourseBuilder: React.FC = () => {
 
               {editMode === 'lesson' && selectedModule && (
                 <LessonEditor
+                  key={selectedLesson?.id || 'new-lesson'}
                   moduleId={selectedModule.id}
                   lesson={selectedLesson}
                   onSave={handleSaveComplete}
@@ -263,6 +265,8 @@ export const CourseBuilder: React.FC = () => {
 
               {editMode === 'test' && selectedModule && (
                 <TestEditor
+                  key={selectedLesson?.id || 'new-test'}
+                  courseId={courseId!}
                   moduleId={selectedModule.id}
                   lesson={selectedLesson}
                   onSave={handleSaveComplete}

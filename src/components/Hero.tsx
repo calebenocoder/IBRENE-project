@@ -1,12 +1,36 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
 
 export const Hero: React.FC = () => {
+  const [content, setContent] = useState({
+    title: 'Bem-vindo a IBRENE',
+    subtitle: 'Um lugar de fé, esperança e amor.'
+  });
+
+  useEffect(() => {
+    const fetchContent = async () => {
+      const { data } = await supabase
+        .from('site_settings')
+        .select('hero_title, hero_subtitle')
+        .eq('id', 1)
+        .single();
+
+      if (data) {
+        setContent({
+          title: data.hero_title || 'Bem-vindo a IBRENE',
+          subtitle: data.hero_subtitle || 'Um lugar de fé, esperança e amor.'
+        });
+      }
+    };
+    fetchContent();
+  }, []);
+
   return (
     <section className="hero">
       <div className="hero-overlay"></div>
       <div className="hero-content container text-center">
-        <h1 className="hero-title">Bem-vindo a IBRENE</h1>
-        <p className="hero-subtitle">Um lugar de fé, esperança e amor.</p>
+        <h1 className="hero-title">{content.title}</h1>
+        <p className="hero-subtitle">{content.subtitle}</p>
         <div className="hero-actions flex gap-sm" style={{ justifyContent: 'center', marginTop: '2rem' }}>
           <a href="#visit" className="btn btn-primary">Planeje sua Visita</a>
           <a href="#live" className="btn btn-outline">Assista Online</a>

@@ -6,13 +6,16 @@ import { Dashboard } from './pages/Dashboard';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { CourseBuilder } from './pages/CourseBuilder';
 import { CoursePlayer } from './pages/CoursePlayer';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { supabase } from './lib/supabase';
 
 function App() {
   const location = useLocation();
   const isDashboard = location.pathname === '/dashboard';
   const isAdmin = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
   const isCoursePlayer = location.pathname.startsWith('/course/');
+  const [heroImage, setHeroImage] = useState<string | null>(null);
+  const [heroPosition, setHeroPosition] = useState<string>('center top');
 
   useEffect(() => {
     if (isDashboard || isCoursePlayer || isAdmin) {
@@ -22,9 +25,33 @@ function App() {
     }
   }, [isDashboard, isCoursePlayer, isAdmin]);
 
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const { data } = await supabase
+        .from('site_settings')
+        .select('hero_bg_image, hero_bg_position')
+        .eq('id', 1)
+        .single();
+
+      if (data) {
+        if (data.hero_bg_image) setHeroImage(data.hero_bg_image);
+        if (data.hero_bg_position) setHeroPosition(data.hero_bg_position);
+      }
+    };
+    fetchSettings();
+  }, []);
+
   return (
     <>
-      {!isDashboard && !isCoursePlayer && !isAdmin && <div className="global-hero-background" />}
+      {!isDashboard && !isCoursePlayer && !isAdmin && (
+        <div
+          className="global-hero-background"
+          style={{
+            backgroundImage: heroImage ? `url(${heroImage})` : undefined,
+            backgroundPosition: heroPosition
+          }}
+        />
+      )}
       {!isDashboard && !isCoursePlayer && !location.pathname.includes('/admin/course/') && !isAdmin && <Navbar />}
       <Routes>
         <Route path="/" element={<Home />} />

@@ -23,6 +23,9 @@ export const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, onSav
     gradient_css: course?.gradient_css || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     published: course?.published ?? true,
   });
+  const [gradientColor1, setGradientColor1] = useState('#667eea');
+  const [gradientColor2, setGradientColor2] = useState('#764ba2');
+  const [gradientAngle, setGradientAngle] = useState(135);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -36,6 +39,8 @@ export const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, onSav
         gradient_css: course.gradient_css,
         published: course.published,
       });
+      // Parse existing gradient to extract colors and angle
+      parseGradient(course.gradient_css);
     } else {
       // Reset form for new course
       setFormData({
@@ -45,8 +50,33 @@ export const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, onSav
         gradient_css: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         published: false,
       });
+      setGradientColor1('#667eea');
+      setGradientColor2('#764ba2');
+      setGradientAngle(135);
     }
   }, [course, isOpen]);
+
+  // Parse gradient string to extract colors and angle
+  const parseGradient = (gradientCss: string) => {
+    try {
+      const angleMatch = gradientCss.match(/linear-gradient\((\d+)deg/);
+      const color1Match = gradientCss.match(/#[0-9a-fA-F]{6}/);
+      const color2Match = gradientCss.match(/#[0-9a-fA-F]{6}(?!.*#[0-9a-fA-F]{6})/);
+
+      if (angleMatch) setGradientAngle(parseInt(angleMatch[1]));
+      if (color1Match) setGradientColor1(color1Match[0]);
+      if (color2Match) setGradientColor2(color2Match[0]);
+    } catch (e) {
+      // If parsing fails, use defaults
+      console.error('Failed to parse gradient:', e);
+    }
+  };
+
+  // Update gradient CSS when colors or angle change
+  useEffect(() => {
+    const newGradient = `linear-gradient(${gradientAngle}deg, ${gradientColor1} 0%, ${gradientColor2} 100%)`;
+    setFormData(prev => ({ ...prev, gradient_css: newGradient }));
+  }, [gradientColor1, gradientColor2, gradientAngle]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,29 +146,44 @@ export const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, onSav
           </div>
 
           <div className="form-group">
-            <label htmlFor="description">Descrição</label>
-            <textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Descrição do curso..."
-              rows={4}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="gradient">Gradiente CSS</label>
-            <input
-              id="gradient"
-              type="text"
-              value={formData.gradient_css}
-              onChange={(e) => setFormData({ ...formData, gradient_css: e.target.value })}
-              placeholder="linear-gradient(...)"
-            />
-            <div
-              className="gradient-preview"
-              style={{ background: formData.gradient_css }}
-            />
+            <label>Gradiente de Fundo</label>
+            <div className="gradient-editor">
+              <div className="gradient-colors">
+                <div className="color-picker-group">
+                  <label htmlFor="color1">Cor 1</label>
+                  <input
+                    id="color1"
+                    type="color"
+                    value={gradientColor1}
+                    onChange={(e) => setGradientColor1(e.target.value)}
+                  />
+                </div>
+                <div className="color-picker-group">
+                  <label htmlFor="color2">Cor 2</label>
+                  <input
+                    id="color2"
+                    type="color"
+                    value={gradientColor2}
+                    onChange={(e) => setGradientColor2(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="gradient-angle">
+                <label htmlFor="angle">Ângulo: {gradientAngle}°</label>
+                <input
+                  id="angle"
+                  type="range"
+                  min="0"
+                  max="360"
+                  value={gradientAngle}
+                  onChange={(e) => setGradientAngle(parseInt(e.target.value))}
+                />
+              </div>
+              <div
+                className="gradient-preview"
+                style={{ background: formData.gradient_css }}
+              />
+            </div>
           </div>
 
           <div className="form-group checkbox-group">
@@ -275,11 +320,89 @@ export const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, onSav
           box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
         }
 
-        .gradient-preview {
-          height: 60px;
+        .gradient-editor {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        .gradient-colors {
+          display: flex;
+          gap: 16px;
+        }
+
+        .color-picker-group {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .color-picker-group label {
+          font-size: 0.85rem;
+          font-weight: 500;
+          color: #64748b;
+          margin: 0;
+        }
+
+        .color-picker-group input[type="color"] {
+          width: 100%;
+          height: 50px;
+          border: 1px solid #cbd5e1;
           border-radius: 8px;
-          margin-top: 8px;
+          cursor: pointer;
+          padding: 4px;
+        }
+
+        .gradient-angle {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .gradient-angle label {
+          font-size: 0.85rem;
+          font-weight: 500;
+          color: #64748b;
+          margin: 0;
+        }
+
+        .gradient-angle input[type="range"] {
+          width: 100%;
+          height: 6px;
+          border-radius: 3px;
+          background: #e2e8f0;
+          outline: none;
+          -webkit-appearance: none;
+        }
+
+        .gradient-angle input[type="range"]::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: #3b82f6;
+          cursor: pointer;
+          border: 3px solid white;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .gradient-angle input[type="range"]::-moz-range-thumb {
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: #3b82f6;
+          cursor: pointer;
+          border: 3px solid white;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .gradient-preview {
+          height: 80px;
+          border-radius: 8px;
           border: 1px solid #e2e8f0;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
         .checkbox-group label {

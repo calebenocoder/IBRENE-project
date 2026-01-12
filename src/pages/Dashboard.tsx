@@ -46,23 +46,64 @@ export const Dashboard: React.FC = () => {
           setUserInitials(initials.toUpperCase());
         }
 
-        // 2. Fetch Courses
+        // 2. Fetch Courses with lesson counts
         const { data: coursesData, error: coursesError } = await supabase
           .from('courses')
-          .select('*')
+          .select(`
+            *,
+            modules (
+              id,
+              lessons (
+                id
+              )
+            )
+          `)
           .eq('published', true);
 
         if (coursesError) throw coursesError;
 
+        // 3. Fetch user progress
+        const { data: progressData, error: progressError } = await supabase
+          .from('user_progress')
+          .select('lesson_id, completed')
+          .eq('user_id', user.id)
+          .eq('completed', true);
+
+        if (progressError) throw progressError;
+
+        // Create a set of completed lesson IDs for quick lookup
+        const completedLessonIds = new Set(progressData?.map(p => p.lesson_id) || []);
+
         if (coursesData) {
-          // Map database columns to our UI requirements
-          const formattedCourses = coursesData.map((c: any) => ({
-            id: c.id,
-            title: c.title,
-            instructor: c.instructor,
-            progress: 0, // Progress tracking will be implemented later
-            gradient_css: c.gradient_css
-          }));
+          // Map database columns to our UI requirements with calculated progress
+          const formattedCourses = coursesData.map((c: any) => {
+            // Count total lessons across all modules
+            const totalLessons = c.modules?.reduce((total: number, module: any) => {
+              return total + (module.lessons?.length || 0);
+            }, 0) || 0;
+
+            // Count completed lessons for this course
+            const completedLessons = c.modules?.reduce((completed: number, module: any) => {
+              const moduleLessons = module.lessons || [];
+              const moduleCompleted = moduleLessons.filter((lesson: any) =>
+                completedLessonIds.has(lesson.id)
+              ).length;
+              return completed + moduleCompleted;
+            }, 0) || 0;
+
+            // Calculate progress percentage
+            const progress = totalLessons > 0
+              ? Math.round((completedLessons / totalLessons) * 100)
+              : 0;
+
+            return {
+              id: c.id,
+              title: c.title,
+              instructor: c.instructor,
+              progress,
+              gradient_css: c.gradient_css
+            };
+          });
           setCourses(formattedCourses);
         }
 
