@@ -1,8 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import defaultHero from '../../assets/hero.png';
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { v4 as uuidv4 } from 'uuid';
+import { SortableServiceHour } from './SortableServiceHour';
 
 interface ServiceHour {
+    id: string;
     day: string;
     time: string;
     label: string;
@@ -10,9 +28,9 @@ interface ServiceHour {
 
 // Default values matching the public site (ServiceTimes.tsx)
 const DEFAULT_HOURS: ServiceHour[] = [
-    { day: "Domingo", time: "09:00", label: "Escola Bíblica" },
-    { day: "Domingo", time: "18:00", label: "Culto de Adoração" },
-    { day: "Quarta-feira", time: "19:30", label: "Culto de Oração" }
+    { id: uuidv4(), day: "Domingo", time: "09:00", label: "Escola Bíblica" },
+    { id: uuidv4(), day: "Domingo", time: "18:00", label: "Culto de Adoração" },
+    { id: uuidv4(), day: "Quarta-feira", time: "19:30", label: "Culto de Oração" }
 ];
 
 export const SiteManager: React.FC = () => {
@@ -27,6 +45,17 @@ export const SiteManager: React.FC = () => {
     const [heroSubtitle, setHeroSubtitle] = useState('Um lugar de fé, esperança e amor.');
     const [hours, setHours] = useState<ServiceHour[]>([]);
 
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8,
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
     useEffect(() => {
         fetchSettings();
     }, []);
@@ -40,13 +69,16 @@ export const SiteManager: React.FC = () => {
 
         if (error) {
             console.error('Error fetching site settings:', error);
-            // If error is "PGRST116" (no rows), we default to the hardcoded values
             setHours(DEFAULT_HOURS);
         } else if (data) {
             setBgImage(data.hero_bg_image || '');
-            // If DB has hours, use them. If DB row exists but hours is null/empty, use defaults.
             if (data.service_hours && data.service_hours.length > 0) {
-                setHours(data.service_hours);
+                // Ensure all hours have IDs (migrating old data)
+                const hoursWithIds = data.service_hours.map((h: any) => ({
+                    ...h,
+                    id: h.id || uuidv4()
+                }));
+                setHours(hoursWithIds);
             } else {
                 setHours(DEFAULT_HOURS);
             }
@@ -90,7 +122,7 @@ export const SiteManager: React.FC = () => {
     };
 
     const handleAddHour = () => {
-        setHours([...hours, { day: 'Domingo', time: '00:00', label: 'Culto' }]);
+        setHours([...hours, { id: uuidv4(), day: 'Domingo', time: '00:00', label: 'Culto' }]);
     };
 
     const handleRemoveHour = (index: number) => {
@@ -103,6 +135,19 @@ export const SiteManager: React.FC = () => {
         const newHours = [...hours];
         newHours[index] = { ...newHours[index], [field]: value };
         setHours(newHours);
+    };
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+
+        if (over && active.id !== over.id) {
+            const oldIndex = hours.findIndex((h) => h.id === active.id);
+            const newIndex = hours.findIndex((h) => h.id === over.id);
+
+            if (oldIndex !== -1 && newIndex !== -1) {
+                setHours(arrayMove(hours, oldIndex, newIndex));
+            }
+        }
     };
 
     if (loading) {
@@ -246,38 +291,25 @@ export const SiteManager: React.FC = () => {
                     <p className="empty-text">Nenhum horário cadastrado.</p>
                 ) : (
                     <div className="hours-list">
-                        {hours.map((h, i) => (
-                            <div key={i} className="hour-item">
-                                <input
-                                    type="text"
-                                    value={h.day}
-                                    onChange={(e) => handleHourChange(i, 'day', e.target.value)}
-                                    placeholder="Dia"
-                                    className="form-input flex-1"
-                                />
-                                <input
-                                    type="text"
-                                    value={h.time}
-                                    onChange={(e) => handleHourChange(i, 'time', e.target.value)}
-                                    placeholder="Hora"
-                                    className="form-input w-time"
-                                />
-                                <input
-                                    type="text"
-                                    value={h.label}
-                                    onChange={(e) => handleHourChange(i, 'label', e.target.value)}
-                                    placeholder="Descrição"
-                                    className="form-input flex-2"
-                                />
-                                <button
-                                    onClick={() => handleRemoveHour(i)}
-                                    className="btn-remove"
-                                    title="Remover"
-                                >
-                                    ✕
-                                </button>
-                            </div>
-                        ))}
+                        <DndContext
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={handleDragEnd}
+                        >
+                            <SortableContext
+                                items={hours.map(h => h.id)}
+                                strategy={verticalListSortingStrategy}
+                            >
+                                {hours.map((h, i) => (
+                                    <SortableServiceHour
+                                        key={h.id}
+                                        hour={h}
+                                        onRemove={() => handleRemoveHour(i)}
+                                        onChange={(field, value) => handleHourChange(i, field, value)}
+                                    />
+                                ))}
+                            </SortableContext>
+                        </DndContext>
                     </div>
                 )}
             </div>
@@ -351,7 +383,6 @@ export const SiteManager: React.FC = () => {
                 .btn-link:hover { text-decoration: underline; }
 
                 .hours-list { display: flex; flex-direction: column; gap: 0.75rem; }
-                .hour-item { display: flex; gap: 0.75rem; align-items: center; background-color: #f9fafb; padding: 0.75rem; border-radius: 0.25rem; border: 1px solid #f3f4f6; }
                 
                 .flex-1 { flex: 1; }
                 .flex-2 { flex: 2; }
