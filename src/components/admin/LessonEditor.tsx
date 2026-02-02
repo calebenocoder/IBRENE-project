@@ -41,6 +41,48 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({
       ['link', 'image'],
       ['clean']
     ],
+    clipboard: {
+      matchVisual: false  // Prevents adding extra line breaks and formatting on paste
+    },
+    keyboard: {
+      bindings: {
+        // Make Shift+Enter create line break, Enter creates new paragraph
+        linebreak: {
+          key: 13,
+          shiftKey: true,
+          handler: function (range: any) {
+            // @ts-ignore
+            this.quill.insertText(range.index, '\n');
+            // @ts-ignore
+            this.quill.setSelection(range.index + 1);
+            return false;
+          }
+        }
+      }
+    }
+  };
+
+  const formats = [
+    'header',
+    'bold', 'italic', 'underline', 'strike',
+    'list',  // Note: 'bullet' is a value of 'list', not a separate format
+    'color', 'background',
+    'link', 'image'
+  ];
+
+  // Sanitize HTML to remove excessive &nbsp; and clean up formatting
+  const sanitizeHTML = (html: string): string => {
+    return html
+      // Replace multiple &nbsp; with single space
+      .replace(/(&nbsp;)+/g, ' ')
+      // Remove inline background-color and color from spans (keeps structure but removes styling)
+      .replace(/style="[^"]*background-color:[^;"]*;?[^"]*"/gi, '')
+      .replace(/style="[^"]*color:[^;"]*;?[^"]*"/gi, '')
+      // Clean up empty style attributes
+      .replace(/\s*style=""\s*/g, '')
+      // Normalize whitespace
+      .replace(/\s+/g, ' ')
+      .trim();
   };
 
   const handleSave = async () => {
@@ -68,7 +110,7 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({
         module_id: moduleId,
         title,
         content_type: 'text' as const,
-        text_content: textContent || null,
+        text_content: sanitizeHTML(textContent) || null,
         video_url: videoUrl || null,
         order_index: lesson?.order_index ?? (count || 0)
       };
@@ -148,6 +190,7 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({
               value={textContent}
               onChange={setTextContent}
               modules={modules}
+              formats={formats}
               placeholder="Escreva o conteúdo da aula aqui..."
             />
           </div>

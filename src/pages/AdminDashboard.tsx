@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useNavigate, Link } from 'react-router-dom';
 import { CourseModal } from '../components/CourseModal';
 import { SiteManager } from '../components/admin/SiteManager';
+import { PostsManager } from '../components/admin/PostsManager'; // New Import
 import logo from '../assets/logo.png';
 
 interface Course {
@@ -21,7 +22,7 @@ export const AdminDashboard: React.FC = () => {
   const [userName, setUserName] = useState('Administrador');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
-  const [activeTab, setActiveTab] = useState<'courses' | 'site'>('courses');
+  const [activeTab, setActiveTab] = useState<'courses' | 'site' | 'posts'>('courses'); // Updated type
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -194,6 +195,12 @@ export const AdminDashboard: React.FC = () => {
             Gerenciar Cursos
           </button>
           <button
+            onClick={() => setActiveTab('posts')}
+            className={`tab-button ${activeTab === 'posts' ? 'active' : ''}`}
+          >
+            Gerenciar Postagens
+          </button>
+          <button
             onClick={() => setActiveTab('site')}
             className={`tab-button ${activeTab === 'site' ? 'active' : ''}`}
           >
@@ -255,6 +262,9 @@ export const AdminDashboard: React.FC = () => {
             )}
           </div>
         )}
+
+        {/* Render New PostsManager Tab */}
+        {activeTab === 'posts' && <PostsManager />}
 
         {activeTab === 'site' && <SiteManager />}
       </main>

@@ -43,6 +43,7 @@
 html {
   background-color: var(--color-primary);
   min-height: 100%;
+  overscroll-behavior: none;
 }
 
 body {
@@ -75,6 +76,7 @@ body.light-mode {
   background-position: center top;
   z-index: -1;
   pointer-events: none;
+  transition: background-position 0.5s ease-out, background-image 0.5s ease-out;
 }
 
 
@@ -158,4 +160,59 @@ button {
 .btn-outline:hover {
   background-color: var(--color-white);
   color: var(--color-primary);
+}
+
+.btn-finish-course {
+  display: block;
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: #10b981;
+  /* Emerald 500 */
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  text-align: center;
+}
+
+.btn-finish-course:hover {
+  background-color: #059669;
+  /* Emerald 600 */
+}
+
+/* Dashboard Course Card Buttons */
+.course-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.course-actions .btn-continue {
+  flex: 1;
+}
+
+.btn-certificate {
+  flex: 1;
+  padding: 10px;
+  background: #f59e0b;
+  /* Amber 500 */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.btn-certificate:hover {
+  background: #d97706;
+  /* Amber 600 */
+  transform: translateY(-1px);
 }

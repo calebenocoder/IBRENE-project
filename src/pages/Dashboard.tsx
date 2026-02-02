@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useNavigate, Link } from 'react-router-dom';
 import logo from '../assets/logo.png';
+import { CertificateModal } from '../components/CertificateModal';
+import { UserSettingsModal } from '../components/UserSettingsModal';
 
 interface Course {
   id: string; // Supabase uses UUID strings
@@ -9,6 +11,7 @@ interface Course {
   instructor: string;
   progress: number;
   gradient_css: string;
+  certificate_id?: string;
 }
 
 export const Dashboard: React.FC = () => {
@@ -16,6 +19,10 @@ export const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState('Estudante');
   const [userInitials, setUserInitials] = useState('ES');
+  const [userId, setUserId] = useState('');
+  const [selectedCertificateId, setSelectedCertificateId] = useState<string | null>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,16 +42,24 @@ export const Dashboard: React.FC = () => {
           return;
         }
 
-        // Set User Details
-        if (user.user_metadata?.full_name) {
-          setUserName(user.user_metadata.full_name);
-          // Create initials
-          const nameParts = user.user_metadata.full_name.split(' ');
-          const initials = nameParts.length > 1
-            ? nameParts[0][0] + nameParts[nameParts.length - 1][0]
-            : nameParts[0][0] + nameParts[0][1];
-          setUserInitials(initials.toUpperCase());
-        }
+        setUserId(user.id);
+
+        // Check for profile data first, fallback to metadata
+        let { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .single();
+
+        const displayedName = profile?.full_name || user.user_metadata?.full_name || 'Estudante';
+        setUserName(displayedName);
+
+        // Create initials
+        const nameParts = displayedName.split(' ');
+        const initials = nameParts.length > 1
+          ? nameParts[0][0] + nameParts[nameParts.length - 1][0]
+          : nameParts[0][0] + (nameParts[0][1] || 'S');
+        setUserInitials(initials.toUpperCase());
 
         // 2. Fetch Courses with lesson counts
         const { data: coursesData, error: coursesError } = await supabase
@@ -70,6 +85,19 @@ export const Dashboard: React.FC = () => {
           .eq('completed', true);
 
         if (progressError) throw progressError;
+
+        // 4. Fetch certificates
+        const { data: certsData, error: certsError } = await supabase
+          .from('certificates')
+          .select('id, course_id')
+          .eq('user_id', user.id);
+
+        if (certsError) console.error('Error fetching certificates:', certsError);
+
+        const certMap = new Map();
+        certsData?.forEach(cert => {
+          certMap.set(cert.course_id, cert.id);
+        });
 
         // Create a set of completed lesson IDs for quick lookup
         const completedLessonIds = new Set(progressData?.map(p => p.lesson_id) || []);
@@ -101,7 +129,8 @@ export const Dashboard: React.FC = () => {
               title: c.title,
               instructor: c.instructor,
               progress,
-              gradient_css: c.gradient_css
+              gradient_css: c.gradient_css,
+              certificate_id: certMap.get(c.id)
             };
           });
           setCourses(formattedCourses);
@@ -121,6 +150,15 @@ export const Dashboard: React.FC = () => {
     await supabase.auth.signOut();
     navigate('/');
   };
+
+  const filteredCourses = React.useMemo(() => {
+    if (!searchQuery) return courses;
+    const lowerQuery = searchQuery.toLowerCase();
+    return courses.filter(course =>
+      course.title.toLowerCase().includes(lowerQuery) ||
+      course.instructor.toLowerCase().includes(lowerQuery)
+    );
+  }, [courses, searchQuery]);
 
   if (loading) {
     return (
@@ -188,19 +226,47 @@ export const Dashboard: React.FC = () => {
             <h1>Painel do Aluno</h1>
             <p className="welcome-text">Bem-vindo de volta, {userName}.</p>
           </div>
-          <div className="user-avatar">{userInitials}</div>
+
+          <div className="header-actions">
+            <button
+              className="btn-settings"
+              onClick={() => setIsSettingsOpen(true)}
+              title="Configurações do Perfil"
+            >
+              ⚙️
+            </button>
+            <div className="user-avatar">{userInitials}</div>
+          </div>
         </header>
 
         <section className="courses-section">
-          <h2 className="section-title">Meus Cursos</h2>
+          <div className="section-header">
+            <h2 className="section-title">Meus Cursos</h2>
 
-          {courses.length === 0 ? (
+            <div className="search-bar-container">
+              <span className="search-icon">🔍</span>
+              <input
+                type="text"
+                placeholder="Buscar meus cursos..."
+                className="search-input"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {filteredCourses.length === 0 ? (
             <div className="text-center" style={{ color: '#666', padding: '2rem' }}>
-              <p>Nenhum curso encontrado. Verifique seu banco de dados.</p>
+              <p>
+                {searchQuery
+                  ? `Nenhum curso encontrado para "${searchQuery}"`
+                  : "Nenhum curso encontrado. Verifique seu banco de dados."
+                }
+              </p>
             </div>
           ) : (
             <div className="courses-grid">
-              {courses.map(course => (
+              {filteredCourses.map(course => (
                 <div key={course.id} className="course-card">
                   <div
                     className="course-image"
@@ -220,19 +286,43 @@ export const Dashboard: React.FC = () => {
                       <span className="progress-text">{course.progress}% concluído</span>
                     </div>
 
-                    <button
-                      className="btn-continue"
-                      onClick={() => navigate(`/course/${course.id}`)}
-                    >
-                      {course.progress > 0 ? 'Continuar' : 'Iniciar'}
-                    </button>
+                    <div className="course-actions">
+                      <button
+                        className="btn-continue"
+                        onClick={() => navigate(`/course/${course.id}`)}
+                      >
+                        {course.progress > 0 ? 'Continuar' : 'Iniciar'}
+                      </button>
+
+                      {course.certificate_id && (
+                        <button
+                          className="btn-certificate"
+                          onClick={() => setSelectedCertificateId(course.certificate_id!)}
+                        >
+                          🏅 Certificado
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           )}
         </section>
-      </div >
+      </div>
+
+      {selectedCertificateId && (
+        <CertificateModal
+          certificateId={selectedCertificateId}
+          onClose={() => setSelectedCertificateId(null)}
+        />
+      )}
+
+      <UserSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        uid={userId}
+      />
 
       <style>{`
         .dashboard-page {
@@ -315,6 +405,29 @@ export const Dashboard: React.FC = () => {
           color: #666;
         }
 
+        .header-actions {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+        }
+
+        .btn-settings {
+          background: #f3f4f6;
+          border: none;
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          cursor: pointer;
+          font-size: 1.2rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: background 0.2s;
+        }
+        .btn-settings:hover {
+          background: #e5e7eb;
+        }
+
         .user-avatar {
           width: 50px;
           height: 50px;
@@ -328,12 +441,52 @@ export const Dashboard: React.FC = () => {
           font-size: 1.2rem;
         }
 
+        .section-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1.5rem;
+          flex-wrap: wrap;
+          gap: 1rem;
+        }
+
         .section-title {
           font-size: 1.5rem;
           color: #1a1a1a;
-          margin-bottom: 1.5rem;
+          margin: 0;
           font-weight: 600;
           text-shadow: none;
+        }
+
+        .search-bar-container {
+          position: relative;
+          min-width: 300px;
+        }
+
+        .search-input {
+          width: 100%;
+          padding: 0.75rem 1rem 0.75rem 2.5rem;
+          border-radius: 99px; /* Pill shape */
+          border: 1px solid #e2e8f0;
+          background: white;
+          font-size: 0.95rem;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+          transition: all 0.2s;
+        }
+        
+        .search-input:focus {
+          outline: none;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .search-icon {
+          position: absolute;
+          left: 1rem;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #9ca3af;
+          pointer-events: none;
         }
 
         .courses-grid {

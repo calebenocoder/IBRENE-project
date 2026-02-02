@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 const getEmbedUrl = (url: string) => {
@@ -67,6 +67,7 @@ export const CoursePlayer: React.FC = () => {
   const [isQuizCompleted, setIsQuizCompleted] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [lessonProgress, setLessonProgress] = useState<Record<string, { completed: boolean; quiz_score?: number }>>({});
+  const contentRef = useRef<HTMLDivElement>(null);
 
   // 1. Fetch Course Data (Only if ID changes or not loaded)
   useEffect(() => {
@@ -187,6 +188,37 @@ export const CoursePlayer: React.FC = () => {
 
     fetchProgress();
   }, [courseId]);
+
+  // 4. Handle external links in rendered content
+  useEffect(() => {
+    if (!contentRef.current) return;
+
+    const handleLinkClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const link = target.closest('a');
+
+      if (link && link.href) {
+        // Check if it's an external link (not starting with /)
+        const url = link.getAttribute('href') || '';
+
+        // If it's a full URL or doesn't start with /, treat as external
+        if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('www.')) {
+          e.preventDefault();
+          e.stopPropagation();
+
+          // Ensure URL has protocol
+          const finalUrl = url.startsWith('www.') ? `https://${url}` : url;
+          window.open(finalUrl, '_blank', 'noopener,noreferrer');
+        }
+      }
+    };
+
+    contentRef.current.addEventListener('click', handleLinkClick);
+
+    return () => {
+      contentRef.current?.removeEventListener('click', handleLinkClick);
+    };
+  }, [activeLesson]);
 
 
   const handleAnswerSelect = (questionId: string, alternativeId: string) => {
@@ -318,6 +350,52 @@ export const CoursePlayer: React.FC = () => {
     return Math.round((completedCount / module.lessons.length) * 100);
   };
 
+  const calculateTotalProgress = (): number => {
+    if (!course) return 0;
+    const allLessons = course.modules.flatMap(m => m.lessons);
+    if (allLessons.length === 0) return 0;
+    const completedCount = allLessons.filter(l => lessonProgress[l.id]?.completed).length;
+    return Math.round((completedCount / allLessons.length) * 100);
+  };
+
+  const handleFinishCourse = async () => {
+    if (!course) return;
+
+    try {
+      // Check if certificate already exists
+      const { data: existingCert } = await supabase
+        .from('certificates')
+        .select('id')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .eq('course_id', course.id)
+        .single();
+
+      if (!existingCert) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('User not authenticated');
+
+        // Issue certificate
+        const { error } = await supabase
+          .from('certificates')
+          .insert([{
+            user_id: user.id,
+            course_id: course.id,
+            certificate_code: `CERT-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
+          }]);
+
+        if (error) throw error;
+      }
+
+      alert('Parabéns! Curso concluído com sucesso.');
+      navigate('/dashboard');
+    } catch (err: any) {
+      console.error('Error issuing certificate:', err);
+      alert('Erro ao emitir certificado: ' + err.message);
+    }
+  };
+
+  const totalProgress = calculateTotalProgress();
+
   if (loading) return (
     <div className="classroom-loading">
       <div className="loading-content">
@@ -375,6 +453,15 @@ export const CoursePlayer: React.FC = () => {
         <div className="sidebar-header">
           <Link to="/dashboard" className="btn-back">← Voltar ao Início</Link>
           <h2 className="course-title">{course.title}</h2>
+          {totalProgress === 100 && (
+            <button
+              onClick={handleFinishCourse}
+              className="btn-finish-course"
+              title="Clique para concluir o curso e gerar seu certificado"
+            >
+              🎉 Concluir Curso
+            </button>
+          )}
         </div>
 
         <div className="modules-list">
@@ -446,7 +533,7 @@ export const CoursePlayer: React.FC = () => {
             </div>
 
             {/* Rich Text Content */}
-            <div className="text-content">
+            <div className="text-content" ref={contentRef}>
               {activeLesson.text_content && (
                 <div
                   className="rich-text-content"
@@ -823,16 +910,40 @@ export const CoursePlayer: React.FC = () => {
           overflow-wrap: break-word;
           word-wrap: break-word;
           word-break: break-word;
+          line-height: 1.8;
+          white-space: normal;  /* Allow nbsp entities to wrap like regular spaces */
+          text-align: justify;
+        }
+
+        .rich-text-content p {
+          margin-bottom: 1rem;
+          white-space: normal;  /* Ensure paragraphs also wrap nbsp properly */
         }
 
         .rich-text-content img {
           max-width: 100%;
           height: auto;
           border-radius: 8px;
+          display: block;
+          margin: 1rem 0;
         }
 
-        .rich-text-content p {
-          margin-bottom: 1.5rem;
+        .rich-text-content a {
+          color: #3b82f6;
+          text-decoration: underline;
+          cursor: pointer;
+        }
+
+        .rich-text-content a:hover {
+          color: #2563eb;
+        }
+
+        .rich-text-content strong {
+          font-weight: 600;
+        }
+
+        .rich-text-content em {
+          font-style: italic;
         }
 
         .text-content h2, .text-content h3 {

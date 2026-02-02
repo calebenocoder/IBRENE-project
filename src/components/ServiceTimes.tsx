@@ -9,23 +9,32 @@ interface ServiceHour {
 
 export const ServiceTimes: React.FC = () => {
   const [hours, setHours] = useState<ServiceHour[]>([]);
+  const [content, setContent] = useState({
+    title: 'Estamos ansiosos em te conhecer',
+    text: 'Não importa onde você esteja em sua jornada espiritual, você é bem-vindo aqui. Temos atividades para todas as idades.'
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchHours = async () => {
+    const fetchSettings = async () => {
       const { data } = await supabase
         .from('site_settings')
-        .select('service_hours')
+        .select('*') // Select all to get hours + visit text
         .eq('id', 1)
         .single();
 
-      if (data?.service_hours) {
-        // Ensure it's treated as ServiceHour[]
-        setHours(data.service_hours as unknown as ServiceHour[]);
+      if (data) {
+        if (data.service_hours) {
+          setHours(data.service_hours as unknown as ServiceHour[]);
+        }
+        setContent({
+          title: data.visit_title || 'Estamos ansiosos em te conhecer',
+          text: data.visit_text || 'Não importa onde você esteja em sua jornada espiritual, você é bem-vindo aqui. Temos atividades para todas as idades.'
+        });
       }
       setLoading(false);
     };
-    fetchHours();
+    fetchSettings();
   }, []);
 
   // Fallback defaults if DB is empty or loading failed without data (though seeding handles it)
@@ -40,11 +49,9 @@ export const ServiceTimes: React.FC = () => {
       <div className="container">
         <div className="grid-2-col">
           <div className="times-content">
-            <h2 className="section-title">Estamos ansiosos em te conhecer</h2>
-            <p className="section-text">
-              Não importa onde você esteja em sua jornada espiritual, você é bem-vindo aqui.
-              Temos atividades para todas as idades.
-            </p>
+            <h2 className="section-title">{content.title}</h2>
+            <p className="section-text">{content.text}</p>
+
 
             <div className="schedule-box">
               <h3>Horários dos Cultos</h3>
