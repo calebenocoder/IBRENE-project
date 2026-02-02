@@ -1,0 +1,27 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # Run at 6:00 AM UTC (3:00 AM Brazil) every day
+    - cron: '0 6 * * *'
+  workflow_dispatch: # Allows you to run this manually from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase Database
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          echo "Pinging Supabase to prevent project pausing..."
+          # We make a simple request to the generic 'courses' table using the API.
+          # Even if it returns 401 or empty, the network request hits the DB layer.
+          # We use the standard PostgREST endpoint structure.
+          
+          curl -s -o /dev/null -w "%{http_code}" -X GET "$SUPABASE_URL/rest/v1/courses?select=count&limit=1" \
+          -H "apikey: $SUPABASE_KEY" \
+          -H "Authorization: Bearer $SUPABASE_KEY"
+          
+          echo "Ping complete."
