@@ -1,15 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { supabase } from '../../lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
 
-// Use the key from environment variables
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-
-// Initialize Gemini
-// Note: Using gemini-1.5-flash as the most reliable flexible model for this tier
-// If 'gemma-3-12b' becomes available on this endpoint, change model: 'gemma-3-12b'
-const genAI = new GoogleGenerativeAI(API_KEY);
+// Note: Gemini initialization and API_KEY usage removed from frontend for security. 
+// The logic now resides in Supabase Edge Functions.
 
 interface AIQuizGeneratorProps {
     courseId: string;
@@ -125,66 +119,21 @@ export const AIQuizGenerator: React.FC<AIQuizGeneratorProps> = ({ courseId, onQu
         setStatus('Lendo conteúdo...');
 
         try {
-            if (!API_KEY) {
-                throw new Error('API Key do Gemini não configurada (.env)');
-            }
+            setStatus('Gerando questões com IA segura...');
 
-            // 1. Get Content
-            const content = await fetchContentText(selectedSource);
-            // Lowered threshold to 10 to catch almost-empty but not title-only cases effectively? 
-            // Actually, title alone is ~30 chars. If content is present it should be much larger.
-            // Keeping 50 is fine if we count title.
-            if (!content || content.length < 5) {
-                // Log for debugging
-                console.log('Fetched content length:', content?.length);
-                console.log('Fetched content preview:', content?.substring(0, 100));
+            // 2. Call Supabase Edge Function
+            const { data, error: functionError } = await supabase.functions.invoke('generate-quiz', {
+                body: {
+                    content: content,
+                    questionCount: questionCount,
+                    difficulty: difficulty
+                }
+            });
 
-                throw new Error(`Conteúdo insuficiente na fonte selecionada (${content?.length || 0} caracteres). Certifique-se de SALVAR a aula antes de gerar.`);
-            }
+            if (functionError) throw functionError;
+            if (!data) throw new Error('Nenhum dado retornado pela IA.');
 
-            setStatus('Gerando questões com IA...');
-
-            // 2. Prepare Prompt
-            // Switching to gemma-3-12b as requested
-            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
-
-            const prompt = `
-        Você é um especialista em educação criando provas.
-        Crie um questionário baseado EXCLUSIVAMENTE no texto fornecido abaixo.
-        
-        Requisitos:
-
-        - ${questionCount} questões de múltipla escolha.
-        - Dificuldade: ${difficulty === 'medium' ? 'Média (foco em compreensão)' : 'Difícil (foco em análise e aplicação)'}.
-        - Idioma: Português Brasileiro (pt-BR).
-        - Cada questão deve ter 5 alternativas (A, B, C, D, E).
-        - Apenas UMA alternativa correta.
-        - Formato de saída: JSON puro (array de objetos).
-
-        Estrutura do JSON:
-        [
-          {
-            "title": "Enunciado da questão...",
-            "alternatives": [
-              {"text": "Alternativa 1...", "is_correct": false},
-              {"text": "Alternativa Correta...", "is_correct": true},
-              ...
-            ]
-          }
-        ]
-
-        CONTEÚDO PARA BASEAR AS QUESTÕES:
-        ${content.substring(0, 15000)} // Limit context if needed
-      `;
-
-            // 3. Call AI
-            const result = await model.generateContent(prompt);
-            const response = await result.response;
-            const text = response.text();
-
-            // 4. Parse JSON
-            const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
-            const questionsData = JSON.parse(jsonStr);
+            const questionsData = data;
 
             // 5. Transform to App Structure (with UUIDs)
             const formattedQuestions = questionsData.map((q: any, qIndex: number) => ({
@@ -288,7 +237,7 @@ export const AIQuizGenerator: React.FC<AIQuizGeneratorProps> = ({ courseId, onQu
                             </div>
 
                             <div className="ai-info">
-                                <p>⚡ Será usado o modelo <strong>Gemini 2.5 Flash Lite</strong> para analisar o conteúdo e criar {questionCount} questões com 5 alternativas cada.</p>
+                                <p>⚡ Usando <strong>Supabase Edge Functions</strong> para garantir que a geração de IA seja rápida e segura. {questionCount} questões serão geradas.</p>
                             </div>
                         </>
                     )}
