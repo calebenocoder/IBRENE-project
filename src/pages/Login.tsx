@@ -5,6 +5,9 @@ import { supabase } from '../lib/supabase';
 export const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [birthDate, setBirthDate] = useState('');
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -18,18 +21,23 @@ export const Login = () => {
 
     try {
       if (isSignUp) {
+        if (password !== confirmPassword) {
+          throw new Error('As senhas não coincidem');
+        }
+
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: {
-              full_name: email.split('@')[0], // Default name
-              avatar_url: 'https://ui-avatars.com/api/?background=random&name=' + email
+              full_name: fullName,
+              birth_date: birthDate,
+              avatar_url: 'https://ui-avatars.com/api/?background=random&name=' + encodeURIComponent(fullName || email)
             }
           }
         });
         if (error) throw error;
-        alert('Check your email for the confirmation link!');
+        alert('Verifique seu email para o link de confirmação!');
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -57,6 +65,33 @@ export const Login = () => {
           {error && <div className="error-message">{error}</div>}
 
           <form onSubmit={handleSubmit}>
+            {isSignUp && (
+              <>
+                <div className="form-group">
+                  <label htmlFor="fullName">Nome Completo</label>
+                  <input
+                    type="text"
+                    id="fullName"
+                    placeholder="Seu nome completo"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="birthDate">Data de Nascimento</label>
+                  <input
+                    type="date"
+                    id="birthDate"
+                    value={birthDate}
+                    onChange={(e) => setBirthDate(e.target.value)}
+                    required
+                  />
+                </div>
+              </>
+            )}
+
             <div className="form-group">
               <label htmlFor="email">Email</label>
               <input
@@ -80,6 +115,20 @@ export const Login = () => {
                 required
               />
             </div>
+
+            {isSignUp && (
+              <div className="form-group">
+                <label htmlFor="confirmPassword">Confirmar Senha</label>
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  placeholder="Confirme sua senha"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                />
+              </div>
+            )}
 
             <button type="submit" className="btn-login" disabled={loading}>
               {loading ? 'Carregando...' : (isSignUp ? 'Cadastrar' : 'Entrar')}

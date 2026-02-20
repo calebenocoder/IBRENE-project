@@ -51,8 +51,6 @@ export const Navbar: React.FC = () => {
         {/* Desktop Menu */}
         <ul className="nav-links flex gap-md items-center">
           <li><Link to="/" className="nav-link">Home</Link></li>
-          <li><a href="/#about" className="nav-link">Sobre</a></li>
-          <li><a href="/#ministries" className="nav-link">Ministérios</a></li>
           {isAuthenticated ? (
             location.pathname === '/' ? (
               <li><Link to="/dashboard" className="btn btn-primary btn-with-icon">

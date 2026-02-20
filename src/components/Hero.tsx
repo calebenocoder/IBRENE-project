@@ -33,7 +33,7 @@ export const Hero: React.FC = () => {
         <p className="hero-subtitle">{content.subtitle}</p>
         <div className="hero-actions flex gap-sm" style={{ justifyContent: 'center', marginTop: '2rem' }}>
           <a href="#visit" className="btn btn-primary">Planeje sua Visita</a>
-          <a href="#live" className="btn btn-outline">Assista Online</a>
+          <a href="https://www.youtube.com/@ibrene-igrejabatistaregula6171" target="_blank" rel="noopener noreferrer" className="btn btn-outline">Assista Online</a>
         </div>
       </div>
 

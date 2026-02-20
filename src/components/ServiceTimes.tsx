@@ -13,7 +13,6 @@ export const ServiceTimes: React.FC = () => {
     title: 'Estamos ansiosos em te conhecer',
     text: 'Não importa onde você esteja em sua jornada espiritual, você é bem-vindo aqui. Temos atividades para todas as idades.'
   });
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -32,7 +31,6 @@ export const ServiceTimes: React.FC = () => {
           text: data.visit_text || 'Não importa onde você esteja em sua jornada espiritual, você é bem-vindo aqui. Temos atividades para todas as idades.'
         });
       }
-      setLoading(false);
     };
     fetchSettings();
   }, []);
@@ -65,16 +63,21 @@ export const ServiceTimes: React.FC = () => {
               </ul>
             </div>
 
-            <a href="https://maps.google.com" target="_blank" className="btn btn-primary mt-4">
+            <a href="https://maps.app.goo.gl/hPUdi7H7StUdo14RA" target="_blank" rel="noopener noreferrer" className="btn btn-primary mt-4">
               Ver no Mapa
             </a>
           </div>
 
           <div className="location-image">
-            {/* Placeholder for location map or image */}
-            <div className="map-placeholder">
-              <span>Localização</span>
-            </div>
+            <iframe
+              width="100%"
+              height="400"
+              style={{ border: 0, borderRadius: '20px', background: '#e2e8f0' }}
+              loading="lazy"
+              allowFullScreen
+              referrerPolicy="no-referrer-when-downgrade"
+              src="https://maps.google.com/maps?q=-12.2534534,-38.9144947&t=&z=15&ie=UTF8&iwloc=&output=embed"
+            ></iframe>
           </div>
         </div>
       </div>
