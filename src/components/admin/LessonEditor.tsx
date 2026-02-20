@@ -3,6 +3,48 @@ import { supabase } from '../../lib/supabase';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 
+function getYouTubeEmbedUrl(rawUrl: string): string | null {
+  if (!rawUrl) {
+    return null;
+  }
+
+  try {
+    const url = new URL(rawUrl.trim());
+    const hostname = url.hostname.toLowerCase();
+
+    // Only allow YouTube domains
+    if (
+      hostname !== 'www.youtube.com' &&
+      hostname !== 'youtube.com' &&
+      hostname !== 'm.youtube.com' &&
+      hostname !== 'youtu.be'
+    ) {
+      return null;
+    }
+
+    let videoId: string | null = null;
+
+    if (hostname === 'youtu.be') {
+      // Short URL format: https://youtu.be/<id>
+      videoId = url.pathname.replace('/', '') || null;
+    } else {
+      // Standard format: https://www.youtube.com/watch?v=<id>
+      videoId = url.searchParams.get('v');
+      if (!videoId && url.pathname.startsWith('/embed/')) {
+        videoId = url.pathname.replace('/embed/', '') || null;
+      }
+    }
+
+    if (!videoId) {
+      return null;
+    }
+
+    return `https://www.youtube.com/embed/${encodeURIComponent(videoId)}`;
+  } catch {
+    return null;
+  }
+}
+
 interface Lesson {
   id: string;
   module_id: string;
@@ -167,19 +209,25 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({
             onChange={(e) => setVideoUrl(e.target.value)}
             placeholder="https://www.youtube.com/watch?v=..."
           />
-          {videoUrl && (
-            <div className="video-preview">
-              <p className="preview-label">Preview:</p>
-              <div className="video-container">
-                <iframe
-                  src={videoUrl.replace('watch?v=', 'embed/')}
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
+          {(() => {
+            const safeEmbedUrl = getYouTubeEmbedUrl(videoUrl);
+            if (!safeEmbedUrl) {
+              return null;
+            }
+            return (
+              <div className="video-preview">
+                <p className="preview-label">Preview:</p>
+                <div className="video-container">
+                  <iframe
+                    src={safeEmbedUrl}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
 
         <div className="form-group">
