@@ -119,6 +119,12 @@ export const AIQuizGenerator: React.FC<AIQuizGeneratorProps> = ({ courseId, onQu
         setStatus('Lendo conteúdo...');
 
         try {
+            // 1. Get Content
+            const content = await fetchContentText(selectedSource);
+            if (!content || content.length < 5) {
+                throw new Error(`Conteúdo insuficiente na fonte selecionada. Certifique-se de SALVAR a aula antes de gerar.`);
+            }
+
             setStatus('Gerando questões com IA segura...');
 
             // 2. Call Supabase Edge Function
