@@ -76,7 +76,7 @@ export const ServiceTimes: React.FC = () => {
               loading="lazy"
               allowFullScreen
               referrerPolicy="no-referrer-when-downgrade"
-              src="https://maps.google.com/maps?q=IBRENE%20-%20Avenida%20Fernando%20Pinto%20de%20Queiroz%2C%20384%20%E2%80%93%20Sim%2C%20Feira%20de%20Santana%2C%20BA%2C%2044085-620&t=&z=15&ie=UTF8&iwloc=&output=embed"
+              src="https://maps.google.com/maps?q=Igreja+Batista+Regular+Nova+Esperança+Feira+de+Santana&t=&z=15&ie=UTF8&iwloc=&output=embed"
             ></iframe>
           </div>
         </div>
