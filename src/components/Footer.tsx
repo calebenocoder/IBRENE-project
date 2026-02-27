@@ -31,6 +31,7 @@ export const Footer: React.FC = () => {
 
         <div className="footer-bottom text-center">
           <p>&copy; {new Date().getFullYear()} IBRENE. Todos os direitos reservados.</p>
+          {/* CD Test: {new Date().toISOString()} */}
         </div>
       </div>
 
