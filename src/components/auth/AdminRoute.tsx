@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 
 interface AdminRouteProps {
@@ -9,7 +9,6 @@ interface AdminRouteProps {
 export const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
-    const location = useLocation();
 
     useEffect(() => {
         const checkAdmin = async () => {
