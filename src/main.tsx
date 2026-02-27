@@ -11,7 +11,7 @@ try {
     throw new Error('Root element not found');
   }
 
-  console.log('Starting React app...');
+  // Removed debug log
   createRoot(root).render(
     <StrictMode>
       <BrowserRouter>
@@ -19,7 +19,7 @@ try {
       </BrowserRouter>
     </StrictMode>,
   );
-  console.log('React app rendered!');
+  // Removed debug log
 } catch (error) {
   console.error('Failed to start app:', error);
   document.body.innerHTML = `<div style="padding:20px; color:red; font-family:monospace;">

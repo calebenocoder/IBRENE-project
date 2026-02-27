@@ -13,8 +13,8 @@ CREATE TABLE IF NOT EXISTS modules (
 );
 
 -- Index for faster queries
-CREATE INDEX idx_modules_course_id ON modules(course_id);
-CREATE INDEX idx_modules_order ON modules(course_id, order_index);
+CREATE INDEX IF NOT EXISTS idx_modules_course_id ON modules(course_id);
+CREATE INDEX IF NOT EXISTS idx_modules_order ON modules(course_id, order_index);
 
 -- 2. Lessons Table (combined lessons and tests)
 CREATE TABLE IF NOT EXISTS lessons (
@@ -30,8 +30,8 @@ CREATE TABLE IF NOT EXISTS lessons (
 );
 
 -- Index for faster queries
-CREATE INDEX idx_lessons_module_id ON lessons(module_id);
-CREATE INDEX idx_lessons_order ON lessons(module_id, order_index);
+CREATE INDEX IF NOT EXISTS idx_lessons_module_id ON lessons(module_id);
+CREATE INDEX IF NOT EXISTS idx_lessons_order ON lessons(module_id, order_index);
 
 -- 3. Tests/Quizzes Table
 CREATE TABLE IF NOT EXISTS tests (
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS tests (
 );
 
 -- Index for faster queries
-CREATE INDEX idx_tests_lesson_id ON tests(lesson_id);
+CREATE INDEX IF NOT EXISTS idx_tests_lesson_id ON tests(lesson_id);
 
 -- 4. Questions Table
 CREATE TABLE IF NOT EXISTS questions (
@@ -57,8 +57,8 @@ CREATE TABLE IF NOT EXISTS questions (
 );
 
 -- Index for faster queries
-CREATE INDEX idx_questions_test_id ON questions(test_id);
-CREATE INDEX idx_questions_order ON questions(test_id, order_index);
+CREATE INDEX IF NOT EXISTS idx_questions_test_id ON questions(test_id);
+CREATE INDEX IF NOT EXISTS idx_questions_order ON questions(test_id, order_index);
 
 -- 5. Alternatives Table
 CREATE TABLE IF NOT EXISTS alternatives (
@@ -71,8 +71,8 @@ CREATE TABLE IF NOT EXISTS alternatives (
 );
 
 -- Index for faster queries
-CREATE INDEX idx_alternatives_question_id ON alternatives(question_id);
-CREATE INDEX idx_alternatives_order ON alternatives(question_id, order_index);
+CREATE INDEX IF NOT EXISTS idx_alternatives_question_id ON alternatives(question_id);
+CREATE INDEX IF NOT EXISTS idx_alternatives_order ON alternatives(question_id, order_index);
 
 -- Enable Row Level Security (RLS)
 ALTER TABLE modules ENABLE ROW LEVEL SECURITY;
@@ -81,72 +81,92 @@ ALTER TABLE tests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE questions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE alternatives ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies: Allow authenticated users to read, admins to modify
+-- RLS Policies: Allow public/authenticated to read, ONLY admins to modify
 
 -- Modules policies
+DROP POLICY IF EXISTS "Public read access for modules" ON modules;
 CREATE POLICY "Public read access for modules" ON modules
   FOR SELECT USING (true);
 
-CREATE POLICY "Authenticated users can insert modules" ON modules
-  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Only admins can insert modules" ON modules;
+CREATE POLICY "Only admins can insert modules" ON modules
+  FOR INSERT WITH CHECK (is_admin());
 
-CREATE POLICY "Authenticated users can update modules" ON modules
-  FOR UPDATE USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Only admins can update modules" ON modules;
+CREATE POLICY "Only admins can update modules" ON modules
+  FOR UPDATE USING (is_admin());
 
-CREATE POLICY "Authenticated users can delete modules" ON modules
-  FOR DELETE USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Only admins can delete modules" ON modules;
+CREATE POLICY "Only admins can delete modules" ON modules
+  FOR DELETE USING (is_admin());
 
 -- Lessons policies
+DROP POLICY IF EXISTS "Public read access for lessons" ON lessons;
 CREATE POLICY "Public read access for lessons" ON lessons
   FOR SELECT USING (true);
 
-CREATE POLICY "Authenticated users can insert lessons" ON lessons
-  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Only admins can insert lessons" ON lessons;
+CREATE POLICY "Only admins can insert lessons" ON lessons
+  FOR INSERT WITH CHECK (is_admin());
 
-CREATE POLICY "Authenticated users can update lessons" ON lessons
-  FOR UPDATE USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Only admins can update lessons" ON lessons;
+CREATE POLICY "Only admins can update lessons" ON lessons
+  FOR UPDATE USING (is_admin());
 
-CREATE POLICY "Authenticated users can delete lessons" ON lessons
-  FOR DELETE USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Only admins can delete lessons" ON lessons;
+CREATE POLICY "Only admins can delete lessons" ON lessons
+  FOR DELETE USING (is_admin());
 
 -- Tests policies
+DROP POLICY IF EXISTS "Public read access for tests" ON tests;
 CREATE POLICY "Public read access for tests" ON tests
   FOR SELECT USING (true);
 
-CREATE POLICY "Authenticated users can insert tests" ON tests
-  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Only admins can insert tests" ON tests;
+CREATE POLICY "Only admins can insert tests" ON tests
+  FOR INSERT WITH CHECK (is_admin());
 
-CREATE POLICY "Authenticated users can update tests" ON tests
-  FOR UPDATE USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Only admins can update tests" ON tests;
+CREATE POLICY "Only admins can update tests" ON tests
+  FOR UPDATE USING (is_admin());
 
-CREATE POLICY "Authenticated users can delete tests" ON tests
-  FOR DELETE USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Only admins can delete tests" ON tests;
+CREATE POLICY "Only admins can delete tests" ON tests
+  FOR DELETE USING (is_admin());
 
 -- Questions policies
+DROP POLICY IF EXISTS "Public read access for questions" ON questions;
 CREATE POLICY "Public read access for questions" ON questions
   FOR SELECT USING (true);
 
-CREATE POLICY "Authenticated users can insert questions" ON questions
-  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Only admins can insert questions" ON questions;
+CREATE POLICY "Only admins can insert questions" ON questions
+  FOR INSERT WITH CHECK (is_admin());
 
-CREATE POLICY "Authenticated users can update questions" ON questions
-  FOR UPDATE USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Only admins can update questions" ON questions;
+CREATE POLICY "Only admins can update questions" ON questions
+  FOR UPDATE USING (is_admin());
 
-CREATE POLICY "Authenticated users can delete questions" ON questions
-  FOR DELETE USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Only admins can delete questions" ON questions;
+CREATE POLICY "Only admins can delete questions" ON questions
+  FOR DELETE USING (is_admin());
 
 -- Alternatives policies
+DROP POLICY IF EXISTS "Public read access for alternatives" ON alternatives;
 CREATE POLICY "Public read access for alternatives" ON alternatives
   FOR SELECT USING (true);
 
-CREATE POLICY "Authenticated users can insert alternatives" ON alternatives
-  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Only admins can insert alternatives" ON alternatives;
+CREATE POLICY "Only admins can insert alternatives" ON alternatives
+  FOR INSERT WITH CHECK (is_admin());
 
-CREATE POLICY "Authenticated users can update alternatives" ON alternatives
-  FOR UPDATE USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Only admins can update alternatives" ON alternatives;
+CREATE POLICY "Only admins can update alternatives" ON alternatives
+  FOR UPDATE USING (is_admin());
 
-CREATE POLICY "Authenticated users can delete alternatives" ON alternatives
-  FOR DELETE USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Only admins can delete alternatives" ON alternatives;
+CREATE POLICY "Only admins can delete alternatives" ON alternatives
+  FOR DELETE USING (is_admin());
 
 -- Add updated_at trigger for modules
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -157,11 +177,15 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+
+DROP TRIGGER IF EXISTS update_modules_updated_at ON modules;
 CREATE TRIGGER update_modules_updated_at BEFORE UPDATE ON modules
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_lessons_updated_at ON lessons;
 CREATE TRIGGER update_lessons_updated_at BEFORE UPDATE ON lessons
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_tests_updated_at ON tests;
 CREATE TRIGGER update_tests_updated_at BEFORE UPDATE ON tests
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

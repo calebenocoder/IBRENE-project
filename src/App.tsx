@@ -7,8 +7,12 @@ import { AdminDashboard } from './pages/AdminDashboard';
 import { CourseBuilder } from './pages/CourseBuilder';
 import { CoursePlayer } from './pages/CoursePlayer';
 import { CertificateView } from './pages/CertificateView';
+import { ResetPassword } from './pages/ResetPassword';
 import { useEffect, useState } from 'react';
 import { supabase } from './lib/supabase';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { AdminRoute } from './components/auth/AdminRoute';
+import { CookieConsent } from './components/CookieConsent';
 
 function App() {
   const location = useLocation();
@@ -80,13 +84,21 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/course/:courseId/builder" element={<CourseBuilder />} />
-        <Route path="/course/:courseId" element={<CoursePlayer />} />
-        <Route path="/course/:courseId/lesson/:lessonId" element={<CoursePlayer />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+
+        {/* Protected Student Routes */}
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/course/:courseId" element={<ProtectedRoute><CoursePlayer /></ProtectedRoute>} />
+        <Route path="/course/:courseId/lesson/:lessonId" element={<ProtectedRoute><CoursePlayer /></ProtectedRoute>} />
+
+        {/* Protected Admin Routes */}
+        <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+        <Route path="/admin/course/:courseId/builder" element={<AdminRoute><CourseBuilder /></AdminRoute>} />
+
+        {/* Public Certificate View (usually public for verification) */}
         <Route path="/certificate/:id" element={<CertificateView />} />
       </Routes>
+      <CookieConsent />
     </>
   );
 }

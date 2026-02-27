@@ -26,42 +26,24 @@ export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const checkAdminAndFetchData = async () => {
+    const fetchAdminData = async () => {
       try {
-        // Check if user is authenticated and is admin
         const { data: { user } } = await supabase.auth.getUser();
 
-        if (!user) {
-          navigate('/login');
-          return;
-        }
-
-        // Check if user is admin
-        const isAdmin = user.user_metadata?.is_admin === true;
-        if (!isAdmin) {
-          // Redirect non-admin users to student dashboard
-          navigate('/dashboard');
-          return;
-        }
-
-        // Set user name
-        if (user.user_metadata?.full_name) {
+        if (user?.user_metadata?.full_name) {
           setUserName(user.user_metadata.full_name);
         }
 
-        // Fetch all courses (including unpublished)
         await fetchCourses();
-
       } catch (error) {
-        console.error('Error checking admin status:', error);
-        navigate('/dashboard');
+        console.error('Error fetching admin data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    checkAdminAndFetchData();
-  }, [navigate]);
+    fetchAdminData();
+  }, []);
 
   const fetchCourses = async () => {
     const { data, error } = await supabase

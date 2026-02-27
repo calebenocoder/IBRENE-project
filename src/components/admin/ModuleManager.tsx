@@ -155,7 +155,7 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({
       .delete({ count: 'exact' })
       .eq('id', moduleId);
 
-    console.log('Delete result:', { error, count, moduleId });
+    // Removed debug log
 
     if (error) {
       console.error('Error deleting module:', error);

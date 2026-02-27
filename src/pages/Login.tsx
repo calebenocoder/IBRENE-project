@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { Turnstile } from '../components/Turnstile';
+import type { TurnstileHandle } from '../components/Turnstile';
 
 export const Login = () => {
   const [email, setEmail] = useState('');
@@ -10,25 +12,52 @@ export const Login = () => {
   const [birthDate, setBirthDate] = useState('');
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
+  const turnstileRef = React.useRef<TurnstileHandle>(null);
   const navigate = useNavigate();
+
+  const handleCaptchaVerify = useCallback((token: string) => {
+    setCaptchaToken(token);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setSuccessMessage(null);
+
+    if (!captchaToken) {
+      setError('Por favor, complete o desafio de segurança (Captcha).');
+      setLoading(false);
+      return;
+    }
 
     try {
-      if (isSignUp) {
+      if (isForgotPassword) {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + '/reset-password',
+          captchaToken: captchaToken || undefined,
+        });
+        if (error) throw error;
+        setSuccessMessage('Email de recuperação enviado! Verifique sua caixa de entrada.');
+      } else if (isSignUp) {
         if (password !== confirmPassword) {
           throw new Error('As senhas não coincidem');
+        }
+
+        if (password.length < 6) {
+          throw new Error('A senha deve ter pelo menos 6 caracteres');
         }
 
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
+            captchaToken: captchaToken || undefined,
             data: {
               full_name: fullName,
               birth_date: birthDate,
@@ -37,17 +66,23 @@ export const Login = () => {
           }
         });
         if (error) throw error;
-        alert('Verifique seu email para o link de confirmação!');
+        setSuccessMessage('Verifique seu email para o link de confirmação!');
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
+          options: {
+            captchaToken: captchaToken || undefined,
+          }
         });
         if (error) throw error;
         navigate('/dashboard');
       }
     } catch (err: any) {
       setError(err.message);
+      // Reset captcha on any error to allow immediate retry
+      setCaptchaToken(null);
+      turnstileRef.current?.reset();
     } finally {
       setLoading(false);
     }
@@ -57,89 +92,144 @@ export const Login = () => {
     <div className="login-page">
       <div className="login-container">
         <div className="login-card">
-          <h2>{isSignUp ? 'Criar Conta' : 'Bem-vindo de volta'}</h2>
+          <h2>
+            {successMessage ? 'Verifique seu Email' : (isForgotPassword ? 'Recuperar Senha' : (isSignUp ? 'Criar Conta' : 'Bem-vindo de volta'))}
+          </h2>
           <p className="subtitle">
-            {isSignUp ? 'Registre-se para começar' : 'Faça login para acessar sua conta'}
+            {successMessage
+              ? 'Enviamos instruções importantes para você.'
+              : (isForgotPassword
+                ? 'Enviaremos um link para redefinir sua senha'
+                : (isSignUp ? 'Registre-se para começar' : 'Faça login para acessar sua conta'))}
           </p>
 
           {error && <div className="error-message">{error}</div>}
+          {successMessage && <div className="success-message">{successMessage}</div>}
 
-          <form onSubmit={handleSubmit}>
-            {isSignUp && (
-              <>
+          {!successMessage ? (
+            <>
+              <form onSubmit={handleSubmit}>
+                {isSignUp && (
+                  <div className="form-group">
+                    <label htmlFor="fullName">Nome Completo</label>
+                    <input
+                      type="text"
+                      id="fullName"
+                      placeholder="Seu nome completo"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      required
+                    />
+                  </div>
+                )}
+
+                {isSignUp && (
+                  <div className="form-group">
+                    <label htmlFor="birthDate">Data de Nascimento</label>
+                    <input
+                      type="date"
+                      id="birthDate"
+                      value={birthDate}
+                      onChange={(e) => setBirthDate(e.target.value)}
+                      required
+                    />
+                  </div>
+                )}
+
                 <div className="form-group">
-                  <label htmlFor="fullName">Nome Completo</label>
+                  <label htmlFor="email">Email</label>
                   <input
-                    type="text"
-                    id="fullName"
-                    placeholder="Seu nome completo"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
+                    type="email"
+                    id="email"
+                    placeholder="seu@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>
 
-                <div className="form-group">
-                  <label htmlFor="birthDate">Data de Nascimento</label>
-                  <input
-                    type="date"
-                    id="birthDate"
-                    value={birthDate}
-                    onChange={(e) => setBirthDate(e.target.value)}
-                    required
-                  />
-                </div>
-              </>
-            )}
+                {!isForgotPassword && (
+                  <div className="form-group">
+                    <label htmlFor="password">Senha</label>
+                    <input
+                      type="password"
+                      id="password"
+                      placeholder="Sua senha"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                )}
 
-            <div className="form-group">
-              <label htmlFor="email">Email</label>
-              <input
-                type="email"
-                id="email"
-                placeholder="seu@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
+                {!isSignUp && !isForgotPassword && (
+                  <div className="forgot-password-link">
+                    <button
+                      type="button"
+                      className="btn-link"
+                      onClick={() => setIsForgotPassword(true)}
+                    >
+                      Esqueci minha senha
+                    </button>
+                  </div>
+                )}
 
-            <div className="form-group">
-              <label htmlFor="password">Senha</label>
-              <input
-                type="password"
-                id="password"
-                placeholder="Sua senha"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
+                {isSignUp && (
+                  <div className="form-group">
+                    <label htmlFor="confirmPassword">Confirmar Senha</label>
+                    <input
+                      type="password"
+                      id="confirmPassword"
+                      placeholder="Confirme sua senha"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                )}
 
-            {isSignUp && (
-              <div className="form-group">
-                <label htmlFor="confirmPassword">Confirmar Senha</label>
-                <input
-                  type="password"
-                  id="confirmPassword"
-                  placeholder="Confirme sua senha"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                />
+                <Turnstile ref={turnstileRef} onVerify={handleCaptchaVerify} />
+
+                <button type="submit" className="btn-login" disabled={loading}>
+                  {loading ? 'Carregando...' : (isForgotPassword ? 'Enviar Link' : (isSignUp ? 'Cadastrar' : 'Entrar'))}
+                </button>
+              </form>
+
+              <div className="login-footer">
+                <button
+                  onClick={() => {
+                    setIsSignUp(!isSignUp);
+                    setIsForgotPassword(false);
+                  }}
+                  className="btn-link"
+                >
+                  {isSignUp ? 'Já tem uma conta? Entrar' : 'Não tem conta? Registre-se'}
+                </button>
+                {isForgotPassword && (
+                  <button
+                    onClick={() => setIsForgotPassword(false)}
+                    className="btn-link"
+                  >
+                    Voltar para o login
+                  </button>
+                )}
               </div>
-            )}
-
-            <button type="submit" className="btn-login" disabled={loading}>
-              {loading ? 'Carregando...' : (isSignUp ? 'Cadastrar' : 'Entrar')}
-            </button>
-          </form>
-
-          <div className="login-footer">
-            <button onClick={() => setIsSignUp(!isSignUp)} className="btn-link">
-              {isSignUp ? 'Já tem uma conta? Entrar' : 'Não tem conta? Registre-se'}
-            </button>
-          </div>
+            </>
+          ) : (
+            <div className="login-footer">
+              <button
+                onClick={() => {
+                  setSuccessMessage(null);
+                  setIsSignUp(false);
+                  setIsForgotPassword(false);
+                }}
+                className="btn-login"
+                style={{ marginTop: '20px' }}
+              >
+                Voltar para o Login
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -260,6 +350,36 @@ export const Login = () => {
           margin-bottom: 1rem;
           text-align: center;
           font-size: 0.9rem;
+        }
+
+        .success-message {
+          background: #e8f5e9;
+          color: #2e7d32;
+          padding: 10px;
+          border-radius: 8px;
+          margin-bottom: 1rem;
+          text-align: center;
+          font-size: 0.9rem;
+        }
+
+        .forgot-password-link {
+          text-align: right;
+          margin-top: -0.75rem;
+          margin-bottom: 1.5rem;
+        }
+
+        .forgot-password-link .btn-link {
+            font-size: 0.8rem;
+            color: #666;
+            background: none;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        
+        .forgot-password-link .btn-link:hover {
+            color: #007bff;
+            text-decoration: underline;
         }
 
         @keyframes fadeIn {

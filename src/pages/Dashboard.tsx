@@ -20,6 +20,7 @@ export const Dashboard: React.FC = () => {
   const [userName, setUserName] = useState('Estudante');
   const [userInitials, setUserInitials] = useState('ES');
   const [userId, setUserId] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
   const [selectedCertificateId, setSelectedCertificateId] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -36,21 +37,20 @@ export const Dashboard: React.FC = () => {
           return;
         }
 
-        // Check if user is admin - redirect to admin dashboard
-        if (user.user_metadata?.is_admin === true) {
-          navigate('/admin');
-          return;
-        }
-
         setUserId(user.id);
 
         // Check for profile data first, fallback to metadata
         let { data: profile } = await supabase
           .from('profiles')
-          .select('full_name')
+          .select('full_name, role')
           .eq('id', user.id)
           .single();
 
+        setIsAdmin(
+          profile?.role === 'admin' ||
+          user.user_metadata?.is_admin === true ||
+          user.app_metadata?.role === 'admin'
+        );
         const displayedName = profile?.full_name || user.user_metadata?.full_name || 'Estudante';
         setUserName(displayedName);
 
@@ -216,7 +216,17 @@ export const Dashboard: React.FC = () => {
           <Link to="/" className="dashboard-logo">
             <img src={logo} alt="IBRENE Logo" />
           </Link>
-          <button className="btn-logout" onClick={handleLogout}>Sair</button>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            {isAdmin && (
+              <button
+                className="btn-admin-access"
+                onClick={() => navigate('/admin')}
+              >
+                Painel Admin
+              </button>
+            )}
+            <button className="btn-logout" onClick={handleLogout}>Sair</button>
+          </div>
         </div>
       </div>
 
@@ -376,6 +386,24 @@ export const Dashboard: React.FC = () => {
           background: #0056b3;
           transform: translateY(-1px);
           box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+        }
+
+        .btn-admin-access {
+          background: #10b981; /* Emerald green for differentiation */
+          color: white;
+          border: none;
+          padding: 10px 24px;
+          border-radius: 8px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          font-size: 0.95rem;
+        }
+
+        .btn-admin-access:hover {
+          background: #059669;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
 
         .dashboard-container {

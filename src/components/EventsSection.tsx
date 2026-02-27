@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Link } from 'react-router-dom';
 import { EventModal } from './EventModal';
 
 interface Event {
@@ -20,10 +20,35 @@ export const EventsSection: React.FC = () => {
     const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+    const [searchParams, setSearchParams] = useSearchParams();
 
     useEffect(() => {
         fetchEvents();
     }, []);
+
+    // Handle deep linking from URL
+    useEffect(() => {
+        if (!loading && events.length > 0) {
+            const eventSlug = searchParams.get('evento');
+            if (eventSlug) {
+                const event = events.find(e => e.slug === eventSlug);
+                if (event) {
+                    setSelectedEvent(event);
+                }
+            }
+        }
+    }, [loading, events, searchParams]);
+
+    const handleSelectEvent = (event: Event | null) => {
+        setSelectedEvent(event);
+        if (event) {
+            setSearchParams({ evento: event.slug || '' });
+        } else {
+            const newParams = new URLSearchParams(searchParams);
+            newParams.delete('evento');
+            setSearchParams(newParams);
+        }
+    };
 
     const fetchEvents = async () => {
         try {
@@ -81,8 +106,7 @@ export const EventsSection: React.FC = () => {
         }
     };
 
-    if (loading) return null;
-    if (events.length === 0) return null;
+    if (!loading && events.length === 0) return null;
 
     return (
         <section className="events-section">
@@ -103,12 +127,26 @@ export const EventsSection: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="events-scroller" ref={scrollContainerRef}>
-                    {events.length === 0 ? (
+                <div className={`events-scroller ${loading ? 'loading' : 'loaded'}`} ref={scrollContainerRef}>
+                    {loading ? (
+                        // Skeleton Cards
+                        [1, 2, 3].map((n) => (
+                            <div key={n} className="event-card skeleton">
+                                <div className="skeleton-shimmer"></div>
+                                <div className="date-badge-skeleton"></div>
+                                <div className="card-content">
+                                    <div className="skeleton-line category"></div>
+                                    <div className="skeleton-line title"></div>
+                                    <div className="skeleton-line desc"></div>
+                                    <div className="skeleton-line button"></div>
+                                </div>
+                            </div>
+                        ))
+                    ) : events.length === 0 ? (
                         <p className="no-events">Nenhum evento em destaque no momento.</p>
                     ) : (
                         events.map((event) => (
-                            <div key={event.id} className="event-card">
+                            <div key={event.id} className="event-card fade-in">
                                 <div
                                     className="card-bg"
                                     style={{ backgroundImage: `url(${event.image})` }}
@@ -126,7 +164,7 @@ export const EventsSection: React.FC = () => {
                                     <h3 className="event-title">{event.title}</h3>
                                     <p className="event-desc">{event.description}</p>
                                     <button
-                                        onClick={() => setSelectedEvent(event)}
+                                        onClick={() => handleSelectEvent(event)}
                                         className="btn-read-more"
                                     >
                                         Ler mais &gt;
@@ -139,7 +177,10 @@ export const EventsSection: React.FC = () => {
             </div>
 
             {selectedEvent && (
-                <EventModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />
+                <EventModal
+                    event={selectedEvent}
+                    onClose={() => handleSelectEvent(null)}
+                />
             )}
 
             <style>{`
@@ -349,6 +390,66 @@ export const EventsSection: React.FC = () => {
                     background-color: var(--color-accent);
                     border-color: var(--color-accent);
                 }
+
+                /* --- Animations & Skeleton --- */
+                
+                .fade-in {
+                    animation: fadeIn 0.8s ease-out forwards;
+                }
+
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+
+                .event-card.skeleton {
+                    background: #f1f5f9;
+                    position: relative;
+                    overflow: hidden;
+                    border: 1px solid #e2e8f0;
+                }
+
+                .skeleton-shimmer {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(
+                        90deg,
+                        transparent,
+                        rgba(255, 255, 255, 0.4),
+                        transparent
+                    );
+                    animation: shimmer 1.5s infinite;
+                    z-index: 5;
+                }
+
+                @keyframes shimmer {
+                    0% { transform: translateX(-100%); }
+                    100% { transform: translateX(100%); }
+                }
+
+                .date-badge-skeleton {
+                    position: absolute;
+                    top: 1rem;
+                    right: 1rem;
+                    width: 60px;
+                    height: 60px;
+                    background: #e2e8f0;
+                    border-radius: 0.5rem;
+                }
+
+                .skeleton-line {
+                    background: #e2e8f0;
+                    border-radius: 4px;
+                    margin-bottom: 0.75rem;
+                }
+
+                .skeleton-line.category { width: 40%; height: 12px; }
+                .skeleton-line.title { width: 85%; height: 24px; margin-bottom: 1rem; }
+                .skeleton-line.desc { width: 70%; height: 14px; }
+                .skeleton-line.button { width: 100px; height: 32px; border-radius: 99px; margin-top: 1rem; }
 
                 @media (max-width: 640px) {
                     .event-card {

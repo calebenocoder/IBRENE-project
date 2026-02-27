@@ -11,21 +11,36 @@ create table if not exists public.profiles (
   constraint username_length check (char_length(full_name) >= 3)
 );
 
+-- Add role column to profiles if not exists
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS role text DEFAULT 'student';
+
 -- Set up Row Level Security (RLS)
 -- See https://supabase.com/docs/guides/auth/row-level-security
 alter table public.profiles enable row level security;
 
-create policy "Public profiles are viewable by everyone."
+-- Drop existing generic policies
+drop policy if exists "Public profiles are viewable by everyone." on profiles;
+drop policy if exists "Users can insert their own profile." on profiles;
+drop policy if exists "Users can update own profile." on profiles;
+
+-- 1. Privacy (LGPD): Only admins can see all profiles. Users can see their own.
+create policy "Users can view own profile or admins all"
   on profiles for select
-  using ( true );
+  using ( auth.uid() = id OR is_admin() );
+
+-- 2. Limited Public View (Optional): If you need to show names on a forum/etc
+-- create policy "Public can see only names"
+--   on profiles for select
+--   using ( true )
+--   with check ( false ); -- Cannot write via this policy
 
 create policy "Users can insert their own profile."
   on profiles for insert
   with check ( auth.uid() = id );
 
-create policy "Users can update own profile."
+create policy "Users can update own profile or admins all"
   on profiles for update
-  using ( auth.uid() = id );
+  using ( auth.uid() = id OR is_admin() );
 
 -- Variable to auto-update updated_at
 create extension if not exists moddatetime schema extensions;
