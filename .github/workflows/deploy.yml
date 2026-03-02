@@ -37,9 +37,9 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./dist/
-          server-dir: ./public_html/
-          # FORCES a fresh upload of all files
-          dangerous-clean-slate: true 
+          # Updated to match your domain's specific folder path
+          server-dir: ./domains/ibrene.com.br/public_html/
+          #dangerous-clean-slate: true
           exclude: |
             **/.git*
             **/.git*/**
