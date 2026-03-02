@@ -34,12 +34,13 @@ jobs:
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
+          username: ${{ secrets.NEW_FTP_USERNAME }} # Update this secret in GitHub!
+          password: ${{ secrets.NEW_FTP_PASSWORD }} # Update this secret in GitHub!
           local-dir: ./dist/
-          # Updated to match your domain's specific folder path
-          server-dir: ./domains/ibrene.com.br/public_html/
-          #dangerous-clean-slate: true
+          # Because your new user starts inside public_html, 
+          # we now deploy to the current root of that user.
+          server-dir: ./ 
+          dangerous-clean-slate: false
           exclude: |
             **/.git*
             **/.git*/**
