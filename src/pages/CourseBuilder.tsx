@@ -291,6 +291,9 @@ export const CourseBuilder: React.FC = () => {
           min-height: 100vh;
           background: #f8fafc;
           padding-top: 220px;
+          overflow-x: hidden;
+          width: 100%;
+          position: relative;
         }
 
         @media (max-width: 768px) {
@@ -429,7 +432,14 @@ export const CourseBuilder: React.FC = () => {
           padding: 8px 16px;
           background: white;
           outline: none;
-          min-width: 400px;
+          width: 100%;
+          min-width: 0;
+        }
+
+        @media (max-width: 768px) {
+          .title-input {
+            font-size: 1.5rem;
+          }
         }
 
         .title-edit-actions {

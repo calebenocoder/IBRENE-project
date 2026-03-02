@@ -564,6 +564,8 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({
           background: white;
           border-radius: 12px;
           overflow: hidden;
+          width: 100%;
+          max-width: 100vw;
         }
 
         .manager-header {
@@ -733,8 +735,11 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({
           justify-content: center;
         }
 
-        .module-header:hover .btn-add-lesson {
-          opacity: 1;
+        .module-header:hover .btn-add-lesson,
+        @media (max-width: 1024px) {
+          .btn-add-lesson {
+            opacity: 1;
+          }
         }
 
         .btn-add-lesson:hover {
@@ -751,8 +756,11 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({
           font-size: 1rem;
         }
 
-        .module-header:hover .btn-delete-module {
-          opacity: 1;
+        .module-header:hover .btn-delete-module,
+        @media (max-width: 1024px) {
+          .btn-delete-module {
+            opacity: 1;
+          }
         }
 
         .btn-edit-module {
@@ -766,8 +774,11 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({
           padding: 0 4px;
         }
 
-        .module-header:hover .btn-edit-module {
-          opacity: 1;
+        .module-header:hover .btn-edit-module,
+        @media (max-width: 1024px) {
+          .btn-edit-module {
+            opacity: 1;
+          }
         }
 
         .add-lesson-menu {
