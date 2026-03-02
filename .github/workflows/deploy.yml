@@ -34,8 +34,8 @@ jobs:
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.NEW_FTP_USERNAME }} # Update this secret in GitHub!
-          password: ${{ secrets.NEW_FTP_PASSWORD }} # Update this secret in GitHub!
+          username: ${{ secrets.FTP_USERNAME }} # Update this secret in GitHub!
+          password: ${{ secrets.FTP_PASSWORD }} # Update this secret in GitHub!
           local-dir: ./dist/
           # Because your new user starts inside public_html, 
           # we now deploy to the current root of that user.
