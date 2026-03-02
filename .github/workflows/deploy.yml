@@ -1,5 +1,8 @@
 name: Deploy to Hostinger FTP
 
+permissions:
+  contents: read
+
 on:
   push:
     branches:
