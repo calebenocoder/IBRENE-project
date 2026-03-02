@@ -42,8 +42,8 @@ export const CourseBuilder: React.FC = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
-      if (!user || !user.user_metadata?.is_admin) {
-        navigate('/dashboard');
+      if (!user) {
+        navigate('/login');
         return;
       }
 
@@ -244,10 +244,18 @@ export const CourseBuilder: React.FC = () => {
                   <h2>{selectedModule.title}</h2>
                   <div className="action-buttons">
                     <button className="btn btn-primary" onClick={handleNewLesson}>
-                      + Nova Aula
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="btn-icon">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                      </svg>
+                      Nova Aula
                     </button>
                     <button className="btn btn-secondary" onClick={handleNewTest}>
-                      + Novo Questionário
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="btn-icon">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                      </svg>
+                      Novo Questionário
                     </button>
                   </div>
                 </div>
@@ -282,19 +290,37 @@ export const CourseBuilder: React.FC = () => {
         .course-builder {
           min-height: 100vh;
           background: #f8fafc;
-          padding-top: 220px; /* Increased to account for larger header */
+          padding-top: 220px;
+        }
+
+        @media (max-width: 768px) {
+          .course-builder {
+            padding-top: 180px;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .course-builder {
+            padding-top: 160px;
+          }
         }
 
         .builder-header {
           background: white;
           border-bottom: 1px solid #e2e8f0;
-          padding: 32px 24px 24px;
+          padding: 24px 20px 16px;
           position: fixed;
           top: 0;
           left: 0;
           right: 0;
           z-index: 1000;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        @media (max-width: 640px) {
+          .builder-header {
+            padding: 16px 16px 12px;
+          }
         }
 
         .header-content {
@@ -303,19 +329,40 @@ export const CourseBuilder: React.FC = () => {
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
+          gap: 1rem;
+        }
+
+        @media (max-width: 640px) {
+          .header-content {
+            align-items: center;
+          }
         }
 
         .header-logo {
           height: 40px;
           object-fit: contain;
           margin-top: 10px;
+          max-width: 120px;
+        }
+
+        @media (max-width: 640px) {
+          .header-logo {
+            height: 30px;
+            margin-top: 0;
+            max-width: 80px;
+          }
+        }
+
+        .header-left {
+          flex: 1;
+          min-width: 0;
         }
 
         .back-link {
           color: #64748b;
           text-decoration: none;
-          font-size: 0.9rem;
-          margin-bottom: 12px;
+          font-size: 0.85rem;
+          margin-bottom: 8px;
           display: block;
           transition: color 0.2s;
         }
@@ -330,16 +377,24 @@ export const CourseBuilder: React.FC = () => {
           margin-bottom: 8px;
           font-weight: 800;
           letter-spacing: -0.025em;
+          line-height: 1.1;
+        }
+
+        @media (max-width: 768px) {
+          .builder-header h1 {
+            font-size: 1.5rem;
+          }
         }
 
         .editable-title {
           cursor: pointer;
-          display: inline-block;
-          padding: 4px 12px;
-          margin-left: -12px;
+          display: block;
+          padding: 4px 0;
           border-radius: 8px;
           transition: all 0.2s;
           position: relative;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
         }
 
         .editable-title:hover {
@@ -432,6 +487,14 @@ export const CourseBuilder: React.FC = () => {
           align-items: start;
         }
 
+        @media (max-width: 1024px) {
+          .builder-layout {
+            grid-template-columns: 1fr;
+            gap: 20px;
+            padding: 0 16px 40px;
+          }
+        }
+
         .modules-sidebar {
           background: white;
           border-radius: 16px;
@@ -439,9 +502,19 @@ export const CourseBuilder: React.FC = () => {
           box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
           height: fit-content;
           position: sticky;
-          top: 220px; /* Match course-builder padding-top */
+          top: 220px;
           max-height: calc(100vh - 260px);
           overflow-y: auto;
+          width: 100%;
+        }
+
+        @media (max-width: 1024px) {
+          .modules-sidebar {
+            position: relative;
+            top: 0;
+            max-height: none;
+            padding: 16px;
+          }
         }
 
         .content-editor {
@@ -450,16 +523,19 @@ export const CourseBuilder: React.FC = () => {
           padding: 40px;
           box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
           min-height: 600px;
+          width: 100%;
+        }
+
+        @media (max-width: 1024px) {
+          .content-editor {
+            padding: 24px;
+            min-height: auto;
+          }
         }
 
         @media (max-width: 1024px) {
           .builder-layout {
             grid-template-columns: 1fr;
-          }
-          .modules-sidebar {
-            position: relative;
-            top: 0;
-            max-height: none;
           }
         }
 
@@ -502,6 +578,14 @@ export const CourseBuilder: React.FC = () => {
           gap: 16px;
         }
 
+        @media (max-width: 640px) {
+          .action-buttons {
+            width: 100%;
+            flex-direction: column;
+            gap: 12px;
+          }
+        }
+
         .btn {
           padding: 14px 28px;
           border-radius: 10px;
@@ -510,6 +594,22 @@ export const CourseBuilder: React.FC = () => {
           border: none;
           transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
           font-size: 1rem;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          line-height: 1;
+        }
+
+        @media (max-width: 640px) {
+          .btn {
+            width: 100%;
+            padding: 16px;
+          }
+        }
+
+        .btn-icon {
+          flex-shrink: 0;
         }
 
         .btn-primary {

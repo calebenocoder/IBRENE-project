@@ -16,16 +16,26 @@ interface CourseModalProps {
 }
 
 export const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, onSave, course }) => {
+  const GRADIENTS = [
+    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    'linear-gradient(135deg, #30cfd0 0%, #330867 100%)',
+    'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+    'linear-gradient(135deg, #a8e063 0%, #56ab2f 100%)',
+    'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+    'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)',
+    'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+    'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)',
+    'linear-gradient(135deg, #f6d365 0%, #fda085 100%)',
+    'linear-gradient(135deg, #2b5876 0%, #4e4376 100%)'
+  ];
+
   const [formData, setFormData] = useState({
     title: course?.title || '',
     instructor: course?.instructor || '',
     description: course?.description || '',
-    gradient_css: course?.gradient_css || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    gradient_css: course?.gradient_css || GRADIENTS[0],
     published: course?.published ?? true,
   });
-  const [gradientColor1, setGradientColor1] = useState('#667eea');
-  const [gradientColor2, setGradientColor2] = useState('#764ba2');
-  const [gradientAngle, setGradientAngle] = useState(135);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -39,44 +49,17 @@ export const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, onSav
         gradient_css: course.gradient_css,
         published: course.published,
       });
-      // Parse existing gradient to extract colors and angle
-      parseGradient(course.gradient_css);
     } else {
       // Reset form for new course
       setFormData({
         title: '',
         instructor: '',
         description: '',
-        gradient_css: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        gradient_css: GRADIENTS[0],
         published: false,
       });
-      setGradientColor1('#667eea');
-      setGradientColor2('#764ba2');
-      setGradientAngle(135);
     }
   }, [course, isOpen]);
-
-  // Parse gradient string to extract colors and angle
-  const parseGradient = (gradientCss: string) => {
-    try {
-      const angleMatch = gradientCss.match(/linear-gradient\((\d+)deg/);
-      const color1Match = gradientCss.match(/#[0-9a-fA-F]{6}/);
-      const color2Match = gradientCss.match(/#[0-9a-fA-F]{6}(?!.*#[0-9a-fA-F]{6})/);
-
-      if (angleMatch) setGradientAngle(parseInt(angleMatch[1]));
-      if (color1Match) setGradientColor1(color1Match[0]);
-      if (color2Match) setGradientColor2(color2Match[0]);
-    } catch (e) {
-      // If parsing fails, use defaults
-      console.error('Failed to parse gradient:', e);
-    }
-  };
-
-  // Update gradient CSS when colors or angle change
-  useEffect(() => {
-    const newGradient = `linear-gradient(${gradientAngle}deg, ${gradientColor1} 0%, ${gradientColor2} 100%)`;
-    setFormData(prev => ({ ...prev, gradient_css: newGradient }));
-  }, [gradientColor1, gradientColor2, gradientAngle]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -146,43 +129,26 @@ export const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, onSav
           </div>
 
           <div className="form-group">
-            <label>Gradiente de Fundo</label>
-            <div className="gradient-editor">
-              <div className="gradient-colors">
-                <div className="color-picker-group">
-                  <label htmlFor="color1">Cor 1</label>
-                  <input
-                    id="color1"
-                    type="color"
-                    value={gradientColor1}
-                    onChange={(e) => setGradientColor1(e.target.value)}
+            <label>Cores de Fundo</label>
+            <div className="gradient-selector">
+              <div className="gradient-grid">
+                {GRADIENTS.map((grad, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    className={`gradient-option ${formData.gradient_css === grad ? 'active' : ''}`}
+                    style={{ background: grad }}
+                    onClick={() => setFormData({ ...formData, gradient_css: grad })}
+                    title={`Opção ${index + 1}`}
                   />
-                </div>
-                <div className="color-picker-group">
-                  <label htmlFor="color2">Cor 2</label>
-                  <input
-                    id="color2"
-                    type="color"
-                    value={gradientColor2}
-                    onChange={(e) => setGradientColor2(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="gradient-angle">
-                <label htmlFor="angle">Ângulo: {gradientAngle}°</label>
-                <input
-                  id="angle"
-                  type="range"
-                  min="0"
-                  max="360"
-                  value={gradientAngle}
-                  onChange={(e) => setGradientAngle(parseInt(e.target.value))}
-                />
+                ))}
               </div>
               <div
-                className="gradient-preview"
+                className="gradient-current-preview"
                 style={{ background: formData.gradient_css }}
-              />
+              >
+                <span>Sua Escolha</span>
+              </div>
             </div>
           </div>
 
@@ -320,89 +286,68 @@ export const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, onSav
           box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
         }
 
-        .gradient-editor {
+        .gradient-selector {
           display: flex;
           flex-direction: column;
           gap: 16px;
         }
 
-        .gradient-colors {
-          display: flex;
-          gap: 16px;
+        .gradient-grid {
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 12px;
         }
 
-        .color-picker-group {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
+        @media (max-width: 480px) {
+          .gradient-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+          }
         }
 
-        .color-picker-group label {
-          font-size: 0.85rem;
-          font-weight: 500;
-          color: #64748b;
-          margin: 0;
-        }
-
-        .color-picker-group input[type="color"] {
-          width: 100%;
-          height: 50px;
-          border: 1px solid #cbd5e1;
-          border-radius: 8px;
-          cursor: pointer;
-          padding: 4px;
-        }
-
-        .gradient-angle {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-
-        .gradient-angle label {
-          font-size: 0.85rem;
-          font-weight: 500;
-          color: #64748b;
-          margin: 0;
-        }
-
-        .gradient-angle input[type="range"] {
-          width: 100%;
-          height: 6px;
-          border-radius: 3px;
-          background: #e2e8f0;
-          outline: none;
-          -webkit-appearance: none;
-        }
-
-        .gradient-angle input[type="range"]::-webkit-slider-thumb {
-          -webkit-appearance: none;
-          appearance: none;
-          width: 20px;
-          height: 20px;
+        .gradient-option {
+          aspect-ratio: 1;
           border-radius: 50%;
-          background: #3b82f6;
-          cursor: pointer;
           border: 3px solid white;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          cursor: pointer;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          padding: 0;
         }
 
-        .gradient-angle input[type="range"]::-moz-range-thumb {
-          width: 20px;
-          height: 20px;
-          border-radius: 50%;
-          background: #3b82f6;
-          cursor: pointer;
-          border: 3px solid white;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        .gradient-option:hover {
+          transform: scale(1.1);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
-        .gradient-preview {
-          height: 80px;
-          border-radius: 8px;
+        .gradient-option.active {
+          border-color: #007bff;
+          transform: scale(1.1);
+          box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.2);
+        }
+
+        .gradient-current-preview {
+          height: 60px;
+          border-radius: 12px;
           border: 1px solid #e2e8f0;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+          overflow: hidden;
+          box-shadow: inset 0 2px 4px rgba(255,255,255,0.2);
+        }
+
+        .gradient-current-preview span {
+          background: rgba(255, 255, 255, 0.9);
+          padding: 4px 12px;
+          border-radius: 99px;
+          font-size: 0.75rem;
+          font-weight: 700;
+          color: #334155;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
         .checkbox-group label {
@@ -436,13 +381,31 @@ export const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, onSav
           gap: 12px;
           justify-content: space-between;
           align-items: center;
-          padding-top: 20px;
+          padding: 24px;
           border-top: 1px solid #e2e8f0;
+          background: #f8fafc;
+        }
+
+        @media (max-width: 640px) {
+          .modal-footer {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+            padding: 16px;
+          }
         }
 
         .footer-right {
           display: flex;
           gap: 12px;
+        }
+
+        @media (max-width: 640px) {
+          .footer-right {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+          }
         }
 
         .btn {
@@ -453,6 +416,16 @@ export const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, onSav
           transition: all 0.2s;
           border: none;
           font-size: 0.95rem;
+          white-space: nowrap;
+          text-align: center;
+        }
+
+        @media (max-width: 640px) {
+          .btn {
+            padding: 12px 16px;
+            font-size: 0.9rem;
+            white-space: normal;
+          }
         }
 
         .btn-manage-content {

@@ -291,7 +291,7 @@ export const SiteManager: React.FC = () => {
                             {bgImage && (
                                 <div className="current-url-display">
                                     <span className="label">URL Atual:</span>
-                                    <span className="url">{bgImage.substring(0, 40)}...</span>
+                                    <span className="url">{bgImage}</span>
                                     <button onClick={() => setBgImage('')} className="btn-text-danger" title="Remover imagem">Remover</button>
                                 </div>
                             )}
@@ -429,7 +429,7 @@ export const SiteManager: React.FC = () => {
                     border: 1px solid #d1d5db;
                     border-radius: 0.375rem;
                     font-family: inherit;
-                    font-size: 0.9rem;
+                    font-size: 1rem;
                 }
                 .form-input:focus { outline: 2px solid #2563eb; border-color: transparent; }
                 .textarea-input { resize: vertical; min-height: 80px; }
@@ -443,6 +443,7 @@ export const SiteManager: React.FC = () => {
                 .file-input {
                     font-size: 0.9rem;
                     color: #6b7280;
+                    width: 100%;
                 }
                 .file-input::file-selector-button {
                     margin-right: 1rem;
@@ -463,11 +464,13 @@ export const SiteManager: React.FC = () => {
                     margin-top: 0.5rem;
                     font-size: 0.85rem;
                     display: flex;
-                    align-items: center;
+                    flex-direction: column;
                     gap: 0.5rem;
                     background: #f9fafb;
-                    padding: 0.5rem;
+                    padding: 0.75rem;
                     border-radius: 4px;
+                    word-break: break-all;
+                    border: 1px solid #f1f5f9;
                 }
                 .current-url-display .label { font-weight: 600; color: #4b5563; }
                 .current-url-display .url { color: #6b7280; font-family: monospace; }

@@ -348,11 +348,16 @@ export const PostsManager: React.FC = () => {
                 <style>{`
                     .posts-editor {
                         background: white;
-                        padding: 2rem;
+                        padding: 1.5rem;
                         border-radius: 8px;
                         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
                         max-width: 900px;
                         margin: 0 auto;
+                    }
+                    @media (max-width: 640px) {
+                        .posts-editor {
+                            padding: 1rem;
+                        }
                     }
                     .editor-header {
                         display: flex;
@@ -365,6 +370,10 @@ export const PostsManager: React.FC = () => {
                     .form-group { margin-bottom: 1.5rem; }
                     .form-row { display: flex; gap: 1rem; }
                     .half { flex: 1; }
+                    
+                    @media (max-width: 640px) {
+                        .form-row { flex-direction: column; gap: 0; }
+                    }
                     
                     .toggle-label {
                         display: flex;
@@ -515,6 +524,14 @@ export const PostsManager: React.FC = () => {
                     border-bottom: 1px solid #f1f5f9;
                     gap: 1rem;
                 }
+                
+                @media (max-width: 640px) {
+                    .post-item {
+                        flex-wrap: wrap;
+                        align-items: flex-start;
+                        padding: 1rem 0.75rem;
+                    }
+                }
                 .post-item:last-child { border-bottom: none; }
                 
                 .post-status {
@@ -595,6 +612,11 @@ export const PostsManager: React.FC = () => {
                 .post-info { flex: 1; }
                 .post-info h4 { margin: 0 0 0.25rem 0; font-size: 1rem; color: #1e293b; display: flex; align-items: center; }
                 .post-date { font-size: 0.875rem; color: #94a3b8; }
+
+                @media (max-width: 640px) {
+                    .post-info { width: calc(100% - 120px); }
+                    .post-info h4 { font-size: 0.9375rem; }
+                }
                 
                 .post-actions { display: flex; gap: 0.5rem; }
                 .action-btn {
@@ -604,6 +626,18 @@ export const PostsManager: React.FC = () => {
                     font-weight: 500;
                     cursor: pointer;
                 }
+                
+                @media (max-width: 640px) {
+                    .post-actions {
+                        width: 100%;
+                        justify-content: flex-end;
+                        margin-top: 0.5rem;
+                        padding-top: 0.75rem;
+                        border-top: 1px solid #f1f5f9;
+                    }
+                    .action-btn { flex: 1; text-align: center; }
+                }
+
                 .action-btn.edit {
                     background: #eff6ff;
                     color: #3b82f6;

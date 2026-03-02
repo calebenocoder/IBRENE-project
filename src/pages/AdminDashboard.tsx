@@ -280,10 +280,21 @@ export const AdminDashboard: React.FC = () => {
           max-width: 1280px;
           margin: 0 auto;
           padding: 0 1.5rem;
-          height: 4rem;
+          min-height: 4rem;
           display: flex;
           justify-content: space-between;
           align-items: center;
+          flex-wrap: wrap;
+          gap: 1rem;
+        }
+
+        @media (max-width: 640px) {
+          .header-container {
+            padding: 0.75rem 1rem;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+          }
         }
 
         .header-left {
@@ -292,7 +303,7 @@ export const AdminDashboard: React.FC = () => {
         }
 
         .dashboard-logo {
-          height: 2rem;
+          height: 1.75rem;
           width: auto;
         }
 
@@ -304,9 +315,22 @@ export const AdminDashboard: React.FC = () => {
         }
 
         .header-left h1 {
-          font-size: 1.25rem;
+          font-size: 1.125rem;
           font-weight: 700;
           color: #1f2937;
+        }
+
+        @media (max-width: 640px) {
+          .header-divider { display: none; }
+          .header-left {
+            width: 100%;
+            justify-content: space-between;
+          }
+          .header-left h1 { 
+            font-size: 1rem;
+            text-align: right;
+            flex: 1;
+          }
         }
 
         .header-right {
@@ -315,6 +339,17 @@ export const AdminDashboard: React.FC = () => {
           gap: 1.5rem;
           font-size: 0.875rem;
           color: #4b5563;
+        }
+
+        @media (max-width: 640px) {
+          .header-right {
+            width: 100%;
+            justify-content: space-between;
+            gap: 0.5rem;
+            padding: 0.75rem 0 0.25rem;
+            border-top: 1px solid #f1f5f9;
+            margin-top: -0.25rem;
+          }
         }
 
         .link-home {
@@ -339,19 +374,43 @@ export const AdminDashboard: React.FC = () => {
         .tabs-header {
           max-width: 1280px;
           margin: 0 auto;
-          padding: 0 1.5rem;
           display: flex;
-          gap: 2rem;
+          justify-content: space-around;
+        }
+
+        @media (max-width: 640px) {
+          .tabs-header {
+            padding: 0 0.5rem;
+            gap: 0;
+            justify-content: space-between;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .tabs-header {
+            gap: 1rem;
+            padding: 0 1rem;
+          }
         }
 
         .tab-button {
-          padding: 1rem 0.25rem;
+          padding: 1rem 0.5rem;
           font-size: 0.875rem;
           font-weight: 500;
           color: #6b7280;
           background: none;
           border-bottom: 2px solid transparent;
           transition: all 0.2s;
+          white-space: nowrap;
+          flex: 1;
+          text-align: center;
+        }
+
+        @media (max-width: 480px) {
+          .tab-button {
+            padding: 0.75rem 0.25rem;
+            font-size: 0.75rem;
+          }
         }
 
         .tab-button:hover {
@@ -378,6 +437,17 @@ export const AdminDashboard: React.FC = () => {
           justify-content: space-between;
           align-items: center;
           margin-bottom: 2rem;
+          gap: 1rem;
+        }
+
+        @media (max-width: 640px) {
+          .section-header {
+            flex-direction: column;
+            align-items: flex-start;
+          }
+          .section-header .btn-primary {
+            width: 100%;
+          }
         }
 
         .section-header h2 {

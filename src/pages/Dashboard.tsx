@@ -362,12 +362,26 @@ export const Dashboard: React.FC = () => {
           display: flex;
           justify-content: space-between;
           align-items: center;
+          gap: 1.5rem;
+        }
+
+        @media (max-width: 640px) {
+          .dashboard-top-container {
+            padding: 0.75rem 1rem;
+            gap: 0.75rem;
+          }
         }
 
         .dashboard-logo img {
           height: 40px;
           width: auto;
           display: block;
+        }
+
+        @media (max-width: 640px) {
+          .dashboard-logo img {
+            height: 30px;
+          }
         }
 
         .btn-logout {
@@ -380,12 +394,25 @@ export const Dashboard: React.FC = () => {
           cursor: pointer;
           transition: all 0.2s;
           font-size: 0.95rem;
+          white-space: nowrap;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 42px;
         }
 
         .btn-logout:hover {
           background: #0056b3;
           transform: translateY(-1px);
           box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+        }
+
+        @media (max-width: 640px) {
+          .btn-logout {
+            padding: 0 12px;
+            font-size: 0.85rem;
+            height: 36px;
+          }
         }
 
         .btn-admin-access {
@@ -398,12 +425,25 @@ export const Dashboard: React.FC = () => {
           cursor: pointer;
           transition: all 0.2s;
           font-size: 0.95rem;
+          white-space: nowrap;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 42px;
         }
 
         .btn-admin-access:hover {
           background: #059669;
           transform: translateY(-1px);
           box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        @media (max-width: 640px) {
+          .btn-admin-access {
+            padding: 0 12px;
+            font-size: 0.85rem;
+            height: 36px;
+          }
         }
 
         .dashboard-container {
