@@ -237,9 +237,10 @@ export const Login = () => {
         .login-page {
           min-height: 100vh;
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           justify-content: center;
-          padding: 20px;
+          padding: 100px 20px 40px;
+          overflow-y: auto;
         }
 
         .login-container {
@@ -254,6 +255,7 @@ export const Login = () => {
           padding: 40px;
           box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
           color: #333;
+          width: 100%;
         }
 
         h2 {
@@ -385,6 +387,18 @@ export const Login = () => {
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 480px) {
+          .login-card {
+            padding: 24px 20px;
+          }
+          .login-page {
+            padding-top: 80px;
+          }
+          h2 {
+            font-size: 1.75rem;
+          }
         }
       `}</style>
     </div>

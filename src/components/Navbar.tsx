@@ -5,7 +5,6 @@ import { supabase } from '../lib/supabase';
 
 export const Navbar: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -48,9 +47,9 @@ export const Navbar: React.FC = () => {
           <img src={logo} alt="IBRENE Logo" />
         </Link>
 
-        {/* Desktop Menu */}
+        {/* Navigation Links */}
         <ul className="nav-links flex gap-md items-center">
-          <li><Link to="/" className="nav-link">Home</Link></li>
+          <li className="desktop-only"><Link to="/" className="nav-link">Home</Link></li>
           {isAuthenticated ? (
             location.pathname === '/' ? (
               <li><Link to="/dashboard" className="btn btn-primary btn-with-icon">
@@ -69,16 +68,6 @@ export const Navbar: React.FC = () => {
             )
           )}
         </ul>
-
-        {/* Mobile Toggle */}
-        <button
-          className="mobile-toggle"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        >
-          <span className="bar"></span>
-          <span className="bar"></span>
-          <span className="bar"></span>
-        </button>
       </div>
 
       <style>{`
@@ -117,10 +106,6 @@ export const Navbar: React.FC = () => {
            color: var(--color-accent);
         }
 
-        .navbar.navbar-dashboard .bar {
-          background-color: var(--color-text-main);
-        }
-
         /* Logo Styling */
         .logo {
           transition: all 0.3s ease;
@@ -153,24 +138,6 @@ export const Navbar: React.FC = () => {
           color: var(--color-accent);
         }
 
-        .mobile-toggle {
-          display: none;
-          flex-direction: column;
-          gap: 6px;
-          background: none;
-        }
-
-        .bar {
-          width: 25px;
-          height: 2px;
-          background-color: var(--color-white);
-          transition: 0.3s;
-        }
-
-        .navbar.scrolled .bar {
-          background-color: var(--color-text-main);
-        }
-
         .btn-with-icon {
           display: flex;
           align-items: center;
@@ -178,11 +145,21 @@ export const Navbar: React.FC = () => {
         }
 
         @media (max-width: 768px) {
-          .nav-links {
-            display: none; /* Mobile menu implementation omitted for brevity, but toggle button exists */
+          .desktop-only {
+            display: none;
           }
-          .mobile-toggle {
+          .nav-links {
             display: flex;
+          }
+          .navbar {
+            padding: 0.75rem 0;
+          }
+          .logo img {
+            height: 32px;
+          }
+          .btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
           }
         }
       `}</style>

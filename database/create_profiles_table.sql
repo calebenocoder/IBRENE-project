@@ -2,7 +2,7 @@
 create table if not exists public.profiles (
   id uuid references auth.users(id) on delete cascade not null primary key,
   full_name text,
-  email text, -- Cached/Public email if needed, or just link by ID
+-- email text column was removed in actual DB
   phone text,
   birth_date date,
   avatar_url text,
@@ -53,12 +53,11 @@ create trigger handle_updated_at before update on public.profiles
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
-  insert into public.profiles (id, full_name, avatar_url, email)
+  insert into public.profiles (id, full_name, avatar_url)
   values (
     new.id,
     new.raw_user_meta_data->>'full_name',
-    new.raw_user_meta_data->>'avatar_url',
-    new.email
+    new.raw_user_meta_data->>'avatar_url'
   );
   return new;
 end;
