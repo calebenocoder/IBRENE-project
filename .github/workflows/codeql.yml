@@ -10,7 +10,8 @@
 # supported CodeQL languages.
 #
 name: "CodeQL Advanced"
-
+permissions:
+  contents: read
 on:
   push:
     branches: [ "main" ]
