@@ -57,7 +57,7 @@ export const ServiceTimes: React.FC = () => {
                 {displayHours.map((h, i) => (
                   <li key={i}>
                     <span className="day">{h.day}</span>
-                    <span className="time">{h.time} - {h.label}</span>
+                    <span className="time">{h.time} — {h.label}</span>
                   </li>
                 ))}
               </ul>
@@ -84,7 +84,7 @@ export const ServiceTimes: React.FC = () => {
 
       <style>{`
         .section-padding { padding: var(--spacing-xl) 0; }
-        .times-section { background-color: var(--color-off-white); }
+        .times-section { background-color: #f1f5f9; }
         
         .grid-2-col {
           display: grid;
@@ -107,16 +107,32 @@ export const ServiceTimes: React.FC = () => {
 
         .schedule-box {
           background: var(--color-white);
-          padding: 2rem;
-          border-radius: 12px;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+          padding: 2.5rem;
+          border-radius: 20px;
+          box-shadow: 
+            0 20px 25px -5px rgba(0, 0, 0, 0.08), 
+            0 10px 10px -5px rgba(0, 0, 0, 0.03);
           margin-bottom: 2rem;
+          border: 1px solid rgba(0, 0, 0, 0.03);
         }
 
         .schedule-box h3 {
-          font-size: 1.25rem;
-          margin-bottom: 1.5rem;
-          color: var(--color-secondary);
+          font-size: 1.5rem;
+          margin-bottom: 2rem;
+          color: var(--color-primary);
+          font-weight: 700;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .schedule-box h3::before {
+          content: "";
+          display: block;
+          width: 4px;
+          height: 24px;
+          background: var(--color-accent);
+          border-radius: 2px;
         }
 
         .schedule-list {
@@ -126,14 +142,15 @@ export const ServiceTimes: React.FC = () => {
         .schedule-list li {
           display: flex;
           justify-content: space-between;
-          padding: 0.75rem 0;
+          align-items: center;
+          padding: 1.25rem 0;
           border-bottom: 1px solid #f1f5f9;
         }
 
         .schedule-list li:last-child { border-bottom: none; }
 
-        .day { font-weight: 600; color: var(--color-primary); }
-        .time { color: var(--color-text-muted); }
+        .day { font-weight: 750; color: var(--color-primary); font-size: 1.1rem; }
+        .time { color: var(--color-text-main); font-weight: 500; text-align: right; }
 
         .map-placeholder {
           background: #e2e8f0;
