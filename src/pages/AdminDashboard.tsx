@@ -148,7 +148,7 @@ export const AdminDashboard: React.FC = () => {
 
   return (
     <div className="admin-dashboard">
-      <header className="dashboard-header">
+      <header className="dashboard-header animate-intro">
         <div className="header-container">
           <div className="header-left">
             <img src={logo} alt="IBRENE" className="dashboard-logo" />
@@ -157,6 +157,7 @@ export const AdminDashboard: React.FC = () => {
           </div>
           <div className="header-right">
             <span>Olá, <strong>{userName}</strong></span>
+            <Link to="/dashboard" className="link-dashboard">Painel Aluno</Link>
             <Link to="/" className="link-home">Ver Site</Link>
             <button
               onClick={async () => { await supabase.auth.signOut(); navigate('/login'); }}
@@ -168,7 +169,7 @@ export const AdminDashboard: React.FC = () => {
         </div>
       </header>
 
-      <div className="tabs-container">
+      <div className="tabs-container animate-intro-delay-1">
         <div className="tabs-header">
           <button
             onClick={() => setActiveTab('courses')}
@@ -191,7 +192,7 @@ export const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
-      <main className="dashboard-content">
+      <main className="dashboard-content animate-intro-delay-2">
         {activeTab === 'courses' && (
           <div className="courses-tab">
             <div className="section-header">
@@ -352,9 +353,33 @@ export const AdminDashboard: React.FC = () => {
           }
         }
 
-        .link-home {
+         .link-home {
           color: #2563eb;
           font-weight: 500;
+        }
+
+        .link-dashboard {
+          background-color: #eff6ff;
+          color: #2563eb;
+          padding: 0.4rem 0.8rem;
+          border-radius: 6px;
+          font-weight: 600;
+          transition: all 0.2s;
+          border: 1px solid #bfdbfe;
+          font-size: 0.8rem;
+          white-space: nowrap;
+        }
+
+        .link-dashboard:hover {
+          background-color: #dbeafe;
+          transform: translateY(-1px);
+        }
+
+        @media (max-width: 640px) {
+          .link-dashboard {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+          }
         }
 
         .btn-logout {
