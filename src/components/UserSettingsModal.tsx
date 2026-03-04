@@ -159,70 +159,98 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({ isOpen, on
                     </div>
                 )}
 
-                <form onSubmit={handleSaveProfile} className="settings-form">
-                    <div className="form-group">
-                        <label>Nome Completo</label>
-                        <input
-                            type="text"
-                            required
-                            value={profile.full_name}
-                            onChange={e => setProfile({ ...profile, full_name: e.target.value })}
-                        />
-                    </div>
-
-                    <div className="form-row">
+                {loading && !profile.full_name && !profile.email ? (
+                    <div className="settings-form skeleton-container">
                         <div className="form-group">
-                            <label>Data de Nascimento</label>
-                            <input
-                                type="date"
-                                value={profile.birth_date}
-                                onChange={e => setProfile({ ...profile, birth_date: e.target.value })}
-                            />
+                            <div className="skeleton-label" />
+                            <div className="skeleton-input" />
+                        </div>
+                        <div className="form-row">
+                            <div className="form-group">
+                                <div className="skeleton-label" />
+                                <div className="skeleton-input" />
+                            </div>
+                            <div className="form-group">
+                                <div className="skeleton-label" />
+                                <div className="skeleton-input" />
+                            </div>
+                        </div>
+                        <div className="skeleton-divider" />
+                        <div className="form-group">
+                            <div className="skeleton-label" />
+                            <div className="skeleton-input" />
                         </div>
                         <div className="form-group">
-                            <label>Telefone / WhatsApp</label>
-                            <input
-                                type="tel"
-                                placeholder="(00) 00000-0000"
-                                value={profile.phone}
-                                onChange={e => setProfile({ ...profile, phone: e.target.value })}
-                            />
+                            <div className="skeleton-label" style={{ width: '40px' }} />
+                            <div className="skeleton-input" style={{ height: '42px' }} />
                         </div>
                     </div>
-
-                    <div className="form-divider">
-                        <span>Segurança e Login</span>
-                    </div>
-
-                    <div className="form-group auth-group">
-                        <label>Email (Requer verificação)</label>
-                        <div className="input-with-button">
+                ) : (
+                    <form onSubmit={handleSaveProfile} className="settings-form">
+                        <div className="form-group">
+                            <label>Nome Completo</label>
                             <input
-                                type="email"
-                                value={profile.email}
-                                onChange={e => setProfile({ ...profile, email: e.target.value })}
+                                type="text"
+                                required
+                                value={profile.full_name}
+                                onChange={e => setProfile({ ...profile, full_name: e.target.value })}
                             />
-                            <button type="button" className="btn-secondary" onClick={handleChangeEmail}>
-                                Alterar Email
+                        </div>
+
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Data de Nascimento</label>
+                                <input
+                                    type="date"
+                                    value={profile.birth_date}
+                                    onChange={e => setProfile({ ...profile, birth_date: e.target.value })}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Telefone / WhatsApp</label>
+                                <input
+                                    type="tel"
+                                    placeholder="(00) 00000-0000"
+                                    value={profile.phone}
+                                    onChange={e => setProfile({ ...profile, phone: e.target.value })}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="form-divider">
+                            <span>Segurança e Login</span>
+                        </div>
+
+                        <div className="form-group auth-group">
+                            <label>Email (Requer verificação)</label>
+                            <div className="input-with-button">
+                                <input
+                                    type="email"
+                                    value={profile.email}
+                                    onChange={e => setProfile({ ...profile, email: e.target.value })}
+                                />
+                                <button type="button" className="btn-secondary" onClick={handleChangeEmail}>
+                                    Alterar Email
+                                </button>
+                            </div>
+                            <p className="help-text">Você receberá um link de confirmação.</p>
+                        </div>
+
+                        <div className="form-group auth-group">
+                            <label>Senha</label>
+                            <button type="button" className="btn-outline-danger" onClick={handleChangePassword}>
+                                Enviar Link de Redefinição de Senha
                             </button>
                         </div>
-                        <p className="help-text">Você receberá um link de confirmação.</p>
-                    </div>
 
-                    <div className="form-group auth-group">
-                        <label>Senha</label>
-                        <button type="button" className="btn-outline-danger" onClick={handleChangePassword}>
-                            Enviar Link de Redefinição de Senha
-                        </button>
-                    </div>
-
-                    <div className="modal-actions">
-                        <button type="button" className="btn-cancel" onClick={onClose}>Cancelar</button>
-                        <button type="submit" className="btn-save" disabled={loading}>
-                            {loading ? 'Salvando...' : 'Salvar Alterações'}
-                        </button>
-                    </div>
-                </form>
+                        <div className="modal-actions">
+                            <button type="button" className="btn-cancel" onClick={onClose}>Cancelar</button>
+                            <button type="submit" className="btn-save" disabled={loading}>
+                                {loading ? 'Salvando...' : 'Salvar Alterações'}
+                            </button>
+                        </div>
+                    </form>
+                )}
             </div>
 
             <style>{`
@@ -289,6 +317,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({ isOpen, on
         }
         .form-row .form-group {
             flex: 1;
+            min-width: 0;
         }
 
         .form-group label {
@@ -303,6 +332,10 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({ isOpen, on
           border-radius: 6px;
           font-size: 1rem;
           transition: border-color 0.2s;
+          width: 100%;
+          box-sizing: border-box;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
         .form-group input:focus {
             border-color: #3b82f6;
@@ -409,6 +442,46 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({ isOpen, on
         }
         .btn-outline-danger:hover {
             background: #fef2f2;
+        }
+
+        /* Skeleton shimmer animation */
+        @keyframes shimmer {
+          0% { background-position: -400px 0; }
+          100% { background-position: 400px 0; }
+        }
+
+        .skeleton-container {
+          display: flex;
+          flex-direction: column;
+          gap: 1.25rem;
+        }
+
+        .skeleton-label {
+          height: 14px;
+          width: 120px;
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background-size: 800px 100%;
+          animation: shimmer 1.5s infinite linear;
+          border-radius: 4px;
+          margin-bottom: 6px;
+        }
+
+        .skeleton-input {
+          height: 46px;
+          width: 100%;
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background-size: 800px 100%;
+          animation: shimmer 1.5s infinite linear;
+          border-radius: 6px;
+        }
+
+        .skeleton-divider {
+          height: 1px;
+          width: 100%;
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background-size: 800px 100%;
+          animation: shimmer 1.5s infinite linear;
+          margin: 0.5rem 0;
         }
 
       `}</style>

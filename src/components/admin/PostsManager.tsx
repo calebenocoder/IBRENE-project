@@ -2,6 +2,31 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
+import {
+    Box,
+    Button,
+    Typography,
+    Stack,
+    IconButton,
+    Tooltip,
+    Card,
+    CardContent,
+    TextField,
+    Switch,
+    FormControlLabel,
+    Grid,
+    CircularProgress,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions
+} from '@mui/material';
+import {
+    Add as AddIcon,
+    Edit as EditIcon,
+    Delete as DeleteIcon,
+    CloudUpload as UploadIcon
+} from '@mui/icons-material';
 
 interface Post {
     id: string;
@@ -211,500 +236,286 @@ export const PostsManager: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="posts-loading">
-                <div className="loading-content">
-                    <div className="spinner"></div>
-                    <p>Carregando postagens...</p>
-                </div>
-                <style>{`
-                    .posts-loading {
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                        padding: 4rem 0;
-                        color: #0f172a;
-                        width: 100%;
-                        min-height: 50vh;
-                    }
-                    .loading-content {
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        gap: 20px;
-                    }
-                    .spinner {
-                        border: 4px solid #e2e8f0;
-                        border-top: 4px solid #3b82f6;
-                        border-radius: 50%;
-                        width: 40px;
-                        height: 40px;
-                        animation: spin 1s linear infinite;
-                    }
-                    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-                `}</style>
-            </div>
+            <Box sx={{ minHeight: '50vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Stack alignItems="center" spacing={2}>
+                    <CircularProgress size={40} />
+                    <Typography color="text.secondary">Carregando postagens...</Typography>
+                </Stack>
+            </Box>
         );
     }
 
     if (isCreating) {
         return (
-            <div className="posts-editor">
-                <div className="editor-header">
-                    <h3>{editingPost ? 'Editar Postagem' : 'Nova Postagem'}</h3>
-                    <button onClick={resetForm} className="btn-secondary">Cancelar</button>
-                </div>
+            <Box sx={{ maxWidth: 900, mx: 'auto', p: { xs: 2, sm: 3 }, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 4, borderBottom: 1, borderColor: 'divider', pb: 2 }}>
+                    <Typography variant="h6" fontWeight="bold">
+                        {editingPost ? 'Editar Postagem' : 'Nova Postagem'}
+                    </Typography>
+                    <Button variant="outlined" color="inherit" onClick={resetForm} size="small">
+                        Cancelar
+                    </Button>
+                </Stack>
 
-                <div className="form-group checkbox-group">
-                    <label className="toggle-label">
-                        <input
-                            type="checkbox"
-                            checked={visible}
-                            onChange={(e) => setVisible(e.target.checked)}
+                <Grid container spacing={3}>
+                    <Grid size={{ xs: 12 }}>
+                        <FormControlLabel
+                            control={
+                                <Switch
+                                    checked={visible}
+                                    onChange={(e) => setVisible(e.target.checked)}
+                                    color="success"
+                                />
+                            }
+                            label="Postagem Visível no Site?"
                         />
-                        <span className="toggle-text">Postagem Visível no Site?</span>
-                    </label>
-                </div>
+                    </Grid>
 
-                <div className="form-group">
-                    <label>Título</label>
-                    <input
-                        type="text"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        className="form-input"
-                        placeholder="Ex: Conferência de Jovens"
-                    />
-                </div>
+                    <Grid size={{ xs: 12 }}>
+                        <TextField
+                            fullWidth
+                            label="Título"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            placeholder="Ex: Conferência de Jovens"
+                        />
+                    </Grid>
 
-                <div className="form-row">
-                    <div className="form-group half">
-                        <label>Categoria</label>
-                        <input
-                            type="text"
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                        <TextField
+                            fullWidth
+                            label="Categoria"
                             value={category}
                             onChange={(e) => setCategory(e.target.value)}
-                            className="form-input"
                             placeholder="Ex: Jovens, Missões"
                         />
-                    </div>
-                    <div className="form-group half">
-                        <label>Data do Evento</label>
-                        <input
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                        <TextField
+                            fullWidth
+                            label="Data do Evento"
                             type="date"
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
-                            className="form-input"
+                            InputLabelProps={{ shrink: true }}
                         />
-                    </div>
-                </div>
+                    </Grid>
 
-                <div className="form-group">
-                    <label>Subtítulo (Curta descrição para o card)</label>
-                    <input
-                        type="text"
-                        value={subtitle}
-                        onChange={(e) => setSubtitle(e.target.value)}
-                        className="form-input"
-                        placeholder="Uma breve descrição que aparece no card..."
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label>Imagem de Capa</label>
-                    <div className="image-upload-container">
-                        {imageUrl && (
-                            <div className="image-previewor">
-                                <img src={imageUrl} alt="Capa" className="preview-img" />
-                            </div>
-                        )}
-                        <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageUpload}
-                            className="file-input"
+                    <Grid size={{ xs: 12 }}>
+                        <TextField
+                            fullWidth
+                            label="Subtítulo (Curta descrição para o card)"
+                            value={subtitle}
+                            onChange={(e) => setSubtitle(e.target.value)}
+                            placeholder="Uma breve descrição que aparece no card..."
                         />
-                        {uploading && <span className="upload-status">Enviando...</span>}
-                    </div>
-                </div>
+                    </Grid>
 
-                <div className="form-group">
-                    <label>Conteúdo Completo</label>
-                    <div className="quill-wrapper">
-                        <ReactQuill
-                            theme="snow"
-                            value={content}
-                            onChange={setContent}
-                            style={{ height: '300px', marginBottom: '50px' }}
-                        />
-                    </div>
-                </div>
+                    <Grid size={{ xs: 12 }}>
+                        <Typography variant="subtitle2" gutterBottom color="text.secondary">
+                            Imagem de Capa
+                        </Typography>
+                        <Stack spacing={2} alignItems="flex-start">
+                            {imageUrl && (
+                                <Box sx={{
+                                    width: '100%',
+                                    height: 200,
+                                    borderRadius: 1,
+                                    border: '1px dashed',
+                                    borderColor: 'divider',
+                                    overflow: 'hidden',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    bgcolor: 'grey.50'
+                                }}>
+                                    <img src={imageUrl} alt="Capa" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                </Box>
+                            )}
+                            <Button
+                                variant="outlined"
+                                component="label"
+                                startIcon={<UploadIcon />}
+                                disabled={uploading}
+                            >
+                                {uploading ? 'Enviando...' : 'Fazer Upload da Imagem'}
+                                <input
+                                    hidden
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleImageUpload}
+                                />
+                            </Button>
+                        </Stack>
+                    </Grid>
 
-                <div className="form-actions">
-                    <button onClick={handleSave} className="btn-primary">
-                        Salvar Postagem
-                    </button>
-                </div>
+                    <Grid size={{ xs: 12 }}>
+                        <Typography variant="subtitle2" gutterBottom color="text.secondary">
+                            Conteúdo Completo
+                        </Typography>
+                        <Box sx={{
+                            '& .quill': {
+                                bgcolor: 'white',
+                                borderRadius: 1,
+                                border: 1,
+                                borderColor: 'divider'
+                            },
+                            '& .ql-toolbar': {
+                                borderTop: 'none',
+                                borderLeft: 'none',
+                                borderRight: 'none',
+                                borderColor: 'divider'
+                            },
+                            '& .ql-container': {
+                                border: 'none',
+                                minHeight: 300
+                            }
+                        }}>
+                            <ReactQuill
+                                theme="snow"
+                                value={content}
+                                onChange={setContent}
+                            />
+                        </Box>
+                    </Grid>
 
-                <style>{`
-                    .posts-editor {
-                        background: white;
-                        padding: 1.5rem;
-                        border-radius: 8px;
-                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                        max-width: 900px;
-                        margin: 0 auto;
-                    }
-                    @media (max-width: 640px) {
-                        .posts-editor {
-                            padding: 1rem;
-                        }
-                    }
-                    .editor-header {
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        margin-bottom: 2rem;
-                        border-bottom: 1px solid #e2e8f0;
-                        padding-bottom: 1rem;
-                    }
-                    .form-group { margin-bottom: 1.5rem; }
-                    .form-row { display: flex; gap: 1rem; }
-                    .half { flex: 1; }
-                    
-                    @media (max-width: 640px) {
-                        .form-row { flex-direction: column; gap: 0; }
-                    }
-                    
-                    .toggle-label {
-                        display: flex;
-                        align-items: center;
-                        gap: 0.5rem;
-                        cursor: pointer;
-                        font-weight: 500;
-                    }
-                    .toggle-text { color: #1e293b; }
-
-                    .form-input {
-                        width: 100%;
-                        padding: 0.75rem;
-                        border: 1px solid #e2e8f0;
-                        border-radius: 6px;
-                        font-size: 1rem;
-                    }
-                    .form-input:focus {
-                        outline: none;
-                        border-color: #3b82f6;
-                        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-                    }
-                    
-                    .btn-primary {
-                        background: #3b82f6;
-                        color: white;
-                        padding: 0.75rem 1.5rem;
-                        border-radius: 6px;
-                        font-weight: 600;
-                        transition: background 0.2s;
-                    }
-                    .btn-primary:hover { background: #2563eb; }
-                    
-                    .btn-secondary {
-                        background: white;
-                        color: #64748b;
-                        border: 1px solid #cbd5e1;
-                        padding: 0.5rem 1rem;
-                        border-radius: 6px;
-                        font-weight: 500;
-                        cursor: pointer;
-                        transition: all 0.2s;
-                    }
-                    .btn-secondary:hover { 
-                        background: #f1f5f9; 
-                        border-color: #94a3b8;
-                        color: #475569;
-                    }
-
-                    .image-previewor {
-                        width: 100%;
-                        height: 200px;
-                        background: #f8fafc;
-                        border-radius: 8px;
-                        overflow: hidden;
-                        margin-bottom: 0.5rem;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        border: 1px dashed #cbd5e1;
-                    }
-                    .preview-img {
-                        height: 100%;
-                        width: 100%;
-                        object-fit: cover;
-                    }
-                    .file-input { margin-top: 0.5rem; }
-                `}</style>
-            </div>
+                    <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
+                        <Button
+                            variant="contained"
+                            fullWidth
+                            size="large"
+                            onClick={handleSave}
+                        >
+                            Salvar Postagem
+                        </Button>
+                    </Grid>
+                </Grid>
+            </Box>
         );
     }
 
     return (
-        <div className="posts-manager">
-            <div className="manager-header">
-                <h2>Gerenciar Postagens</h2>
-                <button onClick={handleCreate} className="btn-primary">+ Nova Postagem</button>
-            </div>
+        <Box sx={{ py: 2 }}>
+            <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                justifyContent="space-between"
+                alignItems={{ xs: 'flex-start', sm: 'center' }}
+                spacing={2}
+                sx={{ mb: 4 }}
+            >
+                <Typography variant="h5" component="h2" fontWeight="bold">
+                    Gerenciar Postagens
+                </Typography>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<AddIcon />}
+                    onClick={handleCreate}
+                    sx={{ borderRadius: 2, whiteSpace: 'nowrap' }}
+                >
+                    Nova Postagem
+                </Button>
+            </Stack>
 
-            <div className="posts-list">
+            <Grid container spacing={2}>
                 {posts.map((post) => (
-                    <div key={post.id} className="post-item">
-                        <div className="post-status">
-                            <label className="toggle-switch" title={post.visible !== false ? 'Visível (Clique para ocultar)' : 'Oculto (Clique para mostrar)'}>
-                                <input
-                                    type="checkbox"
-                                    checked={post.visible !== false}
-                                    onChange={() => handleToggleVisible(post)}
-                                />
-                                <span className="slider"></span>
-                            </label>
-                        </div>
-                        <div className="post-img" style={{ backgroundImage: `url(${post.image_url || '/placeholder-image.jpg'})` }}></div>
-                        <div className="post-info">
-                            <h4>
-                                {post.title}
-                                {post.visible === false && <span className="badge-hidden">Oculto</span>}
-                            </h4>
-                            <span className="post-date">
-                                {new Date(post.event_date).toLocaleDateString()} • {post.category}
-                            </span>
-                        </div>
-                        <div className="post-actions">
-                            <button onClick={() => handleEdit(post)} className="action-btn edit">Editar</button>
-                            <button onClick={() => requestDelete(post.id)} className="action-btn delete">Excluir</button>
-                        </div>
-                    </div>
+                    <Grid size={{ xs: 12 }} key={post.id}>
+                        <Card variant="outlined" sx={{ borderRadius: 2, '&:hover': { boxShadow: 1 } }}>
+                            <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                                <Stack direction="row" spacing={2} alignItems="center">
+                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                        <Tooltip title={post.visible !== false ? 'Visível (Clique para ocultar)' : 'Oculto (Clique para mostrar)'}>
+                                            <Switch
+                                                size="small"
+                                                checked={post.visible !== false}
+                                                onChange={() => handleToggleVisible(post)}
+                                                color="success"
+                                            />
+                                        </Tooltip>
+                                    </Box>
+
+                                    <Box
+                                        sx={{
+                                            width: 60,
+                                            height: 60,
+                                            borderRadius: 1,
+                                            bgcolor: 'grey.200',
+                                            backgroundImage: `url(${post.image_url || '/placeholder-image.jpg'})`,
+                                            backgroundSize: 'cover',
+                                            backgroundPosition: 'center',
+                                            flexShrink: 0
+                                        }}
+                                    />
+
+                                    <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                                        <Typography variant="subtitle1" fontWeight="600" noWrap sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            {post.title}
+                                            {post.visible === false && (
+                                                <Typography
+                                                    component="span"
+                                                    variant="caption"
+                                                    sx={{
+                                                        bgcolor: 'grey.100',
+                                                        color: 'text.secondary',
+                                                        px: 1,
+                                                        borderRadius: 1,
+                                                        fontWeight: 500
+                                                    }}
+                                                >
+                                                    Oculto
+                                                </Typography>
+                                            )}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            {new Date(post.event_date).toLocaleDateString()} • {post.category}
+                                        </Typography>
+                                    </Box>
+
+                                    <Stack direction="row" spacing={1}>
+                                        <Tooltip title="Editar">
+                                            <IconButton size="small" color="primary" onClick={() => handleEdit(post)}>
+                                                <EditIcon fontSize="small" />
+                                            </IconButton>
+                                        </Tooltip>
+                                        <Tooltip title="Excluir">
+                                            <IconButton size="small" color="error" onClick={() => requestDelete(post.id)}>
+                                                <DeleteIcon fontSize="small" />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </Stack>
+                                </Stack>
+                            </CardContent>
+                        </Card>
+                    </Grid>
                 ))}
 
                 {posts.length === 0 && (
-                    <div className="empty-state">
-                        <p>Nenhuma postagem encontrada.</p>
-                    </div>
+                    <Grid size={{ xs: 12 }}>
+                        <Box sx={{ textAlign: 'center', py: 8, bgcolor: 'background.paper', borderRadius: 2, border: '1px dashed', borderColor: 'divider' }}>
+                            <Typography color="text.secondary">
+                                Nenhuma postagem encontrada.
+                            </Typography>
+                        </Box>
+                    </Grid>
                 )}
-            </div>
+            </Grid>
 
-            {/* Custom Delete Confirmation Modal */}
-            {deleteConfirmation.isOpen && (
-                <div className="modal-overlay">
-                    <div className="modal-dialog">
-                        <h3>Confirmar Exclusão</h3>
-                        <p>Tem certeza que deseja excluir esta postagem? Esta ação não pode ser desfeita.</p>
-                        <div className="modal-actions">
-                            <button onClick={cancelDelete} className="btn-secondary">Cancelar</button>
-                            <button onClick={confirmDelete} className="btn-danger">Sim, Excluir</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            <style>{`
-                .manager-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 2rem;
-                }
-                .posts-list {
-                    background: white;
-                    border-radius: 8px;
-                    border: 1px solid #e2e8f0;
-                    overflow: hidden;
-                }
-                .post-item {
-                    display: flex;
-                    align-items: center;
-                    padding: 1rem;
-                    border-bottom: 1px solid #f1f5f9;
-                    gap: 1rem;
-                }
-                
-                @media (max-width: 640px) {
-                    .post-item {
-                        flex-wrap: wrap;
-                        align-items: flex-start;
-                        padding: 1rem 0.75rem;
-                    }
-                }
-                .post-item:last-child { border-bottom: none; }
-                
-                .post-status {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    margin-right: 0.5rem;
-                }
-                
-                .toggle-switch {
-                    position: relative;
-                    display: inline-block;
-                    width: 36px;
-                    height: 20px;
-                }
-                
-                .toggle-switch input { 
-                    opacity: 0;
-                    width: 0;
-                    height: 0;
-                }
-                
-                .slider {
-                    position: absolute;
-                    cursor: pointer;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background-color: #cbd5e1;
-                    transition: .4s;
-                    border-radius: 34px;
-                }
-                
-                .slider:before {
-                    position: absolute;
-                    content: "";
-                    height: 16px;
-                    width: 16px;
-                    left: 2px;
-                    bottom: 2px;
-                    background-color: white;
-                    transition: .4s;
-                    border-radius: 50%;
-                }
-                
-                input:checked + .slider {
-                    background-color: #22c55e;
-                }
-                
-                input:focus + .slider {
-                    box-shadow: 0 0 1px #22c55e;
-                }
-                
-                input:checked + .slider:before {
-                    transform: translateX(16px);
-                }
-
-                .badge-hidden {
-                    display: inline-block;
-                    background: #f1f5f9;
-                    color: #64748b;
-                    font-size: 0.75rem;
-                    padding: 2px 6px;
-                    border-radius: 4px;
-                    margin-left: 0.5rem;
-                    font-weight: 500;
-                }
-
-                .post-img {
-                    width: 60px;
-                    height: 60px;
-                    background-size: cover;
-                    background-position: center;
-                    border-radius: 4px;
-                    background-color: #e2e8f0;
-                }
-                .post-info { flex: 1; }
-                .post-info h4 { margin: 0 0 0.25rem 0; font-size: 1rem; color: #1e293b; display: flex; align-items: center; }
-                .post-date { font-size: 0.875rem; color: #94a3b8; }
-
-                @media (max-width: 640px) {
-                    .post-info { width: calc(100% - 120px); }
-                    .post-info h4 { font-size: 0.9375rem; }
-                }
-                
-                .post-actions { display: flex; gap: 0.5rem; }
-                .action-btn {
-                    padding: 0.25rem 0.75rem;
-                    border-radius: 4px;
-                    font-size: 0.875rem;
-                    font-weight: 500;
-                    cursor: pointer;
-                }
-                
-                @media (max-width: 640px) {
-                    .post-actions {
-                        width: 100%;
-                        justify-content: flex-end;
-                        margin-top: 0.5rem;
-                        padding-top: 0.75rem;
-                        border-top: 1px solid #f1f5f9;
-                    }
-                    .action-btn { flex: 1; text-align: center; }
-                }
-
-                .action-btn.edit {
-                    background: #eff6ff;
-                    color: #3b82f6;
-                }
-                .action-btn.edit:hover { background: #dbeafe; }
-                
-                .action-btn.delete {
-                    background: #fef2f2;
-                    color: #ef4444;
-                }
-                .action-btn.delete:hover { background: #fee2e2; }
-
-                .empty-state {
-                    padding: 3rem;
-                    text-align: center;
-                    color: #94a3b8;
-                }
-
-                /* Modal Styles */
-                .modal-overlay {
-                    position: fixed;
-                    inset: 0;
-                    background: rgba(0,0,0,0.5);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    z-index: 1000;
-                }
-                .modal-dialog {
-                    background: white;
-                    padding: 2rem;
-                    border-radius: 8px;
-                    max-width: 400px;
-                    width: 90%;
-                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                }
-                .modal-dialog h3 { margin-top: 0; color: #1e293b; }
-                .modal-dialog p { color: #64748b; margin-bottom: 1.5rem; }
-                .modal-actions {
-                    display: flex;
-                    justify-content: flex-end;
-                    gap: 1rem;
-                }
-                .btn-danger {
-                    background: #ef4444;
-                    color: white;
-                    padding: 0.5rem 1rem;
-                    border-radius: 6px;
-                    font-weight: 600;
-                }
-                .btn-danger:hover { background: #dc2626; }
-                .btn-secondary {
-                    background: white;
-                    color: #64748b;
-                    border: 1px solid #cbd5e1;
-                    padding: 0.5rem 1rem;
-                    border-radius: 6px;
-                    font-weight: 500;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                }
-                .btn-secondary:hover { 
-                    background: #f1f5f9; 
-                    border-color: #94a3b8;
-                    color: #475569;
-                }
-            `}</style>
-        </div>
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={deleteConfirmation.isOpen} onClose={cancelDelete}>
+                <DialogTitle>Confirmar Exclusão</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        Tem certeza que deseja excluir esta postagem? Esta ação não pode ser desfeita.
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={cancelDelete}>Cancelar</Button>
+                    <Button onClick={confirmDelete} color="error" variant="contained">
+                        Sim, Excluir
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </Box>
     );
 };

@@ -17,6 +17,27 @@ import {
 } from '@dnd-kit/sortable';
 import { v4 as uuidv4 } from 'uuid';
 import { SortableServiceHour } from './SortableServiceHour';
+import {
+    Box,
+    Typography,
+    Stack,
+    Button,
+    Grid,
+    Card,
+    CardContent,
+    TextField,
+    IconButton,
+    Tooltip,
+    Alert,
+    CircularProgress,
+    Divider,
+    Paper
+} from '@mui/material';
+import {
+    Save as SaveIcon,
+    CloudUpload as UploadIcon,
+    Add as AddIcon
+} from '@mui/icons-material';
 
 interface ServiceHour {
     id: string;
@@ -196,419 +217,269 @@ export const SiteManager: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="site-manager-loading">
-                <div className="loading-content">
-                    <div className="spinner"></div>
-                    <p>Carregando configurações...</p>
-                </div>
-                <style>{`
-                    .site-manager-loading {
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                        padding: 4rem 0;
-                        color: #0f172a;
-                        width: 100%;
-                        min-height: 50vh;
-                    }
-                    .loading-content {
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        gap: 20px;
-                    }
-                    .spinner {
-                        border: 4px solid #e2e8f0;
-                        border-top: 4px solid #3b82f6;
-                        border-radius: 50%;
-                        width: 40px;
-                        height: 40px;
-                        animation: spin 1s linear infinite;
-                    }
-                    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-                `}</style>
-            </div>
+            <Box sx={{ minHeight: '50vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Stack alignItems="center" spacing={2}>
+                    <CircularProgress size={40} />
+                    <Typography color="text.secondary">Carregando configurações...</Typography>
+                </Stack>
+            </Box>
         );
     }
 
     return (
-        <div className="site-manager">
-            <div className="sm-header">
-                <h2>Gerenciar Site</h2>
-                <p>Personalize a aparência e informações do site principal.</p>
-            </div>
+        <Box sx={{ pb: 4 }}>
+            <Box sx={{ mb: 4 }}>
+                <Typography variant="h5" fontWeight="bold" gutterBottom>
+                    Gerenciar Site
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                    Personalize a aparência e informações do site principal.
+                </Typography>
+            </Box>
 
             {message && (
-                <div className={`message-alert ${message.type}`}>
+                <Alert
+                    severity={message.type === 'success' ? 'success' : 'error'}
+                    sx={{ mb: 3 }}
+                    onClose={() => setMessage(null)}
+                >
                     {message.text}
-                </div>
+                </Alert>
             )}
 
-            <div className="settings-card">
-                <h3>Informações Principais (Hero)</h3>
-                <div className="form-group">
-                    <label>Título Principal</label>
-                    <input
-                        type="text"
-                        value={heroTitle}
-                        onChange={(e) => setHeroTitle(e.target.value)}
-                        className="form-input"
-                        placeholder="Ex: Bem-vindo a IBRENE"
-                    />
-                </div>
-                <div className="form-group">
-                    <label>Subtítulo</label>
-                    <input
-                        type="text"
-                        value={heroSubtitle}
-                        onChange={(e) => setHeroSubtitle(e.target.value)}
-                        className="form-input"
-                        placeholder="Ex: Um lugar de fé, esperança e amor."
-                    />
-                </div>
-            </div>
+            <Stack spacing={3}>
+                <Card variant="outlined" sx={{ borderRadius: 2 }}>
+                    <CardContent>
+                        <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+                            Informações Principais (Hero)
+                        </Typography>
+                        <Stack spacing={2}>
+                            <TextField
+                                label="Título Principal"
+                                fullWidth
+                                value={heroTitle}
+                                onChange={(e) => setHeroTitle(e.target.value)}
+                                placeholder="Ex: Bem-vindo a IBRENE"
+                            />
+                            <TextField
+                                label="Subtítulo"
+                                fullWidth
+                                value={heroSubtitle}
+                                onChange={(e) => setHeroSubtitle(e.target.value)}
+                                placeholder="Ex: Um lugar de fé, esperança e amor."
+                            />
+                        </Stack>
+                    </CardContent>
+                </Card>
 
-            <div className="settings-card">
-                <h3>Imagem de Fundo</h3>
-                <div className="editor-columns">
-                    <div className="column-left">
-                        <div className="form-group">
-                            <label>Upload da Imagem</label>
-                            <div className="file-upload-wrapper">
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleImageUpload}
-                                    disabled={uploading}
-                                    className="file-input"
-                                />
-                                {uploading && <span className="uploading-text">Enviando...</span>}
-                            </div>
-                            <p className="help-text">
-                                Formatos aceitos: JPG, PNG, WebP. Máx: 5MB.
-                            </p>
-                            {bgImage && (
-                                <div className="current-url-display">
-                                    <span className="label">URL Atual:</span>
-                                    <span className="url">{bgImage}</span>
-                                    <button onClick={() => setBgImage('')} className="btn-text-danger" title="Remover imagem">Remover</button>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="form-group">
-                            <label>Posição da Imagem</label>
-                            <div className="position-grid">
-                                {['left top', 'center top', 'right top', 'left center', 'center center', 'right center', 'left bottom', 'center bottom', 'right bottom'].map((pos) => (
-                                    <button
-                                        key={pos}
-                                        type="button"
-                                        className={`pos-strut ${bgPosition === pos ? 'active' : ''}`}
-                                        onClick={() => setBgPosition(pos)}
-                                        title={pos}
+                <Card variant="outlined" sx={{ borderRadius: 2 }}>
+                    <CardContent>
+                        <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+                            Imagem de Fundo
+                        </Typography>
+                        <Grid container spacing={4}>
+                            <Grid size={{ xs: 12, md: 6 }}>
+                                <Typography variant="subtitle2" gutterBottom>
+                                    Upload da Imagem
+                                </Typography>
+                                <Stack direction="row" spacing={2} alignItems="center">
+                                    <Button
+                                        variant="outlined"
+                                        component="label"
+                                        startIcon={<UploadIcon />}
+                                        disabled={uploading}
                                     >
-                                        <div className="dot"></div>
-                                    </button>
-                                ))}
-                            </div>
-                            <p className="help-text mt-2">Clique na grade para definir o ponto de foco.</p>
-                        </div>
-                    </div>
+                                        {uploading ? 'Enviando...' : 'Fazer Upload'}
+                                        <input
+                                            hidden
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleImageUpload}
+                                        />
+                                    </Button>
+                                    {uploading && <CircularProgress size={24} />}
+                                </Stack>
+                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                                    Formatos aceitos: JPG, PNG, WebP. Máx: 5MB.
+                                </Typography>
 
-                    <div className="column-right">
-                        <label className="preview-label">Pré-visualização</label>
-                        <div
-                            className="bg-preview-hero"
-                            style={{
-                                backgroundImage: bgImage ? `url(${bgImage})` : 'none',
-                                backgroundPosition: bgPosition,
-                                backgroundColor: !bgImage ? '#0f172a' : 'transparent'
-                            }}
-                        >
-                            <div className="preview-overlay">
-                                <h4>{heroTitle}</h4>
-                                <p>{heroSubtitle}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                                {bgImage && (
+                                    <Box sx={{ mt: 2, p: 1.5, bgcolor: 'grey.50', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+                                        <Typography variant="caption" fontWeight="bold" display="block">URL Atual:</Typography>
+                                        <Typography variant="caption" sx={{ wordBreak: 'break-all', fontFamily: 'monospace' }}>
+                                            {bgImage}
+                                        </Typography>
+                                        <Button
+                                            size="small"
+                                            color="error"
+                                            sx={{ mt: 1, textTransform: 'none' }}
+                                            onClick={() => setBgImage('')}
+                                        >
+                                            Remover imagem
+                                        </Button>
+                                    </Box>
+                                )}
 
-            <div className="settings-card">
-                <h3>Mensagem de Boas-vindas</h3>
-                <div className="form-group">
-                    <label>Título da Seção</label>
-                    <input
-                        type="text"
-                        value={visitTitle}
-                        onChange={(e) => setVisitTitle(e.target.value)}
-                        className="form-input"
-                        placeholder="Ex: Estamos ansiosos em te conhecer"
-                    />
-                </div>
-                <div className="form-group">
-                    <label>Texto da Mensagem</label>
-                    <textarea
-                        value={visitText}
-                        onChange={(e) => setVisitText(e.target.value)}
-                        className="form-input textarea-input"
-                        placeholder="Ex: Não importa onde você esteja..."
-                        rows={3}
-                    />
-                </div>
-            </div>
+                                <Box sx={{ mt: 3 }}>
+                                    <Typography variant="subtitle2" gutterBottom>
+                                        Posição da Imagem
+                                    </Typography>
+                                    <Paper variant="outlined" sx={{ p: 1, width: 'fit-content' }}>
+                                        <Grid container spacing={1} sx={{ width: 120 }}>
+                                            {['left top', 'center top', 'right top', 'left center', 'center center', 'right center', 'left bottom', 'center bottom', 'right bottom'].map((pos) => (
+                                                <Grid size={{ xs: 4 }} key={pos}>
+                                                    <Tooltip title={pos}>
+                                                        <IconButton
+                                                            size="small"
+                                                            onClick={() => setBgPosition(pos)}
+                                                            sx={{
+                                                                width: 32,
+                                                                height: 32,
+                                                                bgcolor: bgPosition === pos ? 'primary.light' : 'grey.100',
+                                                                color: bgPosition === pos ? 'white' : 'grey.400',
+                                                                '&:hover': { bgcolor: bgPosition === pos ? 'primary.main' : 'grey.200' }
+                                                            }}
+                                                        >
+                                                            <Box sx={{
+                                                                width: 8,
+                                                                height: 8,
+                                                                borderRadius: '50%',
+                                                                bgcolor: bgPosition === pos ? 'white' : 'grey.400'
+                                                            }} />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </Grid>
+                                            ))}
+                                        </Grid>
+                                    </Paper>
+                                    <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                                        Clique na grade para definir o ponto de foco.
+                                    </Typography>
+                                </Box>
+                            </Grid>
 
-            <div className="settings-card">
-                <div className="card-header-row">
-                    <h3>Horários dos Cultos</h3>
-                    <button onClick={handleAddHour} className="btn-link">+ Adicionar Horário</button>
-                </div>
+                            <Grid size={{ xs: 12, md: 6 }}>
+                                <Typography variant="subtitle2" gutterBottom>
+                                    Pré-visualização
+                                </Typography>
+                                <Box
+                                    sx={{
+                                        width: '100%',
+                                        aspectRatio: '16/9',
+                                        backgroundSize: 'cover',
+                                        backgroundPosition: bgPosition,
+                                        backgroundImage: bgImage ? `url(${bgImage})` : 'none',
+                                        backgroundColor: !bgImage ? 'primary.main' : 'transparent',
+                                        borderRadius: 2,
+                                        border: '1px solid',
+                                        borderColor: 'divider',
+                                        position: 'relative',
+                                        overflow: 'hidden',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: 'white',
+                                        textAlign: 'center'
+                                    }}
+                                >
+                                    <Box sx={{
+                                        position: 'absolute',
+                                        inset: 0,
+                                        bgcolor: 'rgba(0,0,0,0.4)',
+                                        p: 2,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}>
+                                        <Typography variant="h6" fontWeight="bold">{heroTitle}</Typography>
+                                        <Typography variant="caption">{heroSubtitle}</Typography>
+                                    </Box>
+                                </Box>
+                            </Grid>
+                        </Grid>
+                    </CardContent>
+                </Card>
 
-                {hours.length === 0 ? (
-                    <p className="empty-text">Nenhum horário cadastrado.</p>
-                ) : (
-                    <div className="hours-list">
-                        <DndContext
-                            sensors={sensors}
-                            collisionDetection={closestCenter}
-                            onDragEnd={handleDragEnd}
-                        >
-                            <SortableContext items={hours.map(h => h.id)} strategy={verticalListSortingStrategy}>
-                                {hours.map((h, i) => (
-                                    <SortableServiceHour
-                                        key={h.id}
-                                        hour={h}
-                                        onRemove={() => handleRemoveHour(i)}
-                                        onChange={(field, value) => handleHourChange(i, field, value)}
-                                    />
-                                ))}
-                            </SortableContext>
-                        </DndContext>
-                    </div>
-                )}
-            </div>
+                <Card variant="outlined" sx={{ borderRadius: 2 }}>
+                    <CardContent>
+                        <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+                            Mensagem de Boas-vindas
+                        </Typography>
+                        <Stack spacing={2}>
+                            <TextField
+                                label="Título da Seção"
+                                fullWidth
+                                value={visitTitle}
+                                onChange={(e) => setVisitTitle(e.target.value)}
+                            />
+                            <TextField
+                                label="Texto da Mensagem"
+                                fullWidth
+                                multiline
+                                rows={4}
+                                value={visitText}
+                                onChange={(e) => setVisitText(e.target.value)}
+                            />
+                        </Stack>
+                    </CardContent>
+                </Card>
 
-            <div className="actions-row">
-                <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className={`btn-save ${saving ? 'disabled' : ''}`}
-                >
-                    {saving ? 'Salvando...' : 'Salvar Alterações'}
-                </button>
-            </div>
+                <Card variant="outlined" sx={{ borderRadius: 2 }}>
+                    <CardContent>
+                        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                            <Typography variant="h6" fontWeight="bold">
+                                Horários dos Cultos
+                            </Typography>
+                            <Button size="small" startIcon={<AddIcon />} onClick={handleAddHour}>
+                                Adicionar
+                            </Button>
+                        </Stack>
 
-            <style>{`
-                .site-manager { padding-bottom: 2rem; }
-                .sm-header { margin-bottom: 2rem; }
-                .sm-header h2 { font-size: 1.5rem; font-weight: 700; color: #1f2937; margin-bottom: 0.5rem; }
-                .sm-header p { color: #6b7280; }
+                        <Divider sx={{ mb: 2 }} />
 
-                .settings-card {
-                    background: white;
-                    border: 1px solid #e5e7eb;
-                    border-radius: 0.5rem;
-                    padding: 1.5rem;
-                    margin-bottom: 1.5rem;
-                    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-                }
+                        {hours.length === 0 ? (
+                            <Typography color="text.secondary" textAlign="center" sx={{ py: 4 }}>
+                                Nenhum horário cadastrado.
+                            </Typography>
+                        ) : (
+                            <Box>
+                                <DndContext
+                                    sensors={sensors}
+                                    collisionDetection={closestCenter}
+                                    onDragEnd={handleDragEnd}
+                                >
+                                    <SortableContext items={hours.map(h => h.id)} strategy={verticalListSortingStrategy}>
+                                        <Stack spacing={1}>
+                                            {hours.map((h, i) => (
+                                                <SortableServiceHour
+                                                    key={h.id}
+                                                    hour={h}
+                                                    onRemove={() => handleRemoveHour(i)}
+                                                    onChange={(field, value) => handleHourChange(i, field, value)}
+                                                />
+                                            ))}
+                                        </Stack>
+                                    </SortableContext>
+                                </DndContext>
+                            </Box>
+                        )}
+                    </CardContent>
+                </Card>
 
-                .settings-card h3 {
-                    font-size: 1.1rem;
-                    font-weight: 600;
-                    color: #374151;
-                    margin-bottom: 1rem;
-                }
-
-                .form-group { margin-bottom: 1rem; }
-                .form-group label { display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem; }
-                
-                .form-input {
-                    width: 100%;
-                    padding: 0.625rem;
-                    border: 1px solid #d1d5db;
-                    border-radius: 0.375rem;
-                    font-family: inherit;
-                    font-size: 1rem;
-                }
-                .form-input:focus { outline: 2px solid #2563eb; border-color: transparent; }
-                .textarea-input { resize: vertical; min-height: 80px; }
-
-                .file-upload-wrapper {
-                    display: flex;
-                    align-items: center;
-                    gap: 1rem;
-                }
-                
-                .file-input {
-                    font-size: 0.9rem;
-                    color: #6b7280;
-                    width: 100%;
-                }
-                .file-input::file-selector-button {
-                    margin-right: 1rem;
-                    padding: 0.5rem 1rem;
-                    border-radius: 0.375rem;
-                    background-color: #eff6ff;
-                    color: #1d4ed8;
-                    border: 1px solid #bfdbfe;
-                    cursor: pointer;
-                    font-weight: 500;
-                    transition: all 0.2s;
-                }
-                .file-input::file-selector-button:hover {
-                    background-color: #dbeafe;
-                }
-                
-                .current-url-display {
-                    margin-top: 0.5rem;
-                    font-size: 0.85rem;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 0.5rem;
-                    background: #f9fafb;
-                    padding: 0.75rem;
-                    border-radius: 4px;
-                    word-break: break-all;
-                    border: 1px solid #f1f5f9;
-                }
-                .current-url-display .label { font-weight: 600; color: #4b5563; }
-                .current-url-display .url { color: #6b7280; font-family: monospace; }
-                .btn-text-danger { color: #ef4444; background: none; border: none; font-size: 0.75rem; cursor: pointer; text-decoration: underline; }
-
-                .help-text { font-size: 0.8rem; color: #6b7280; margin-top: 0.5rem; }
-
-                .card-header-row {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 1rem;
-                }
-
-                .btn-link { color: #2563eb; font-weight: 500; font-size: 0.875rem; background: none; border: none; cursor: pointer; }
-                .btn-link:hover { text-decoration: underline; }
-
-                .hours-list { display: flex; flex-direction: column; gap: 0.75rem; }
-                
-                .actions-row { display: flex; justify-content: flex-end; }
-                
-                .btn-save {
-                    background-color: #2563eb;
-                    color: white;
-                    padding: 0.625rem 1.5rem;
-                    border-radius: 0.375rem;
-                    font-weight: 500;
-                    border: none;
-                    cursor: pointer;
-                }
-                .btn-save:hover { background-color: #1d4ed8; }
-                .btn-save.disabled { background-color: #93c5fd; cursor: not-allowed; }
-
-                .message-alert { padding: 1rem; border-radius: 0.375rem; margin-bottom: 1.5rem; }
-                .message-alert.success { background-color: #dcfce7; color: #166534; }
-                .message-alert.error { background-color: #fee2e2; color: #991b1b; }
-
-                .editor-columns {
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 2rem;
-                    align-items: start;
-                }
-                
-                .position-grid {
-                    display: grid;
-                    grid-template-columns: repeat(3, 1fr);
-                    gap: 8px;
-                    width: 120px;
-                    margin-top: 0.5rem;
-                }
-                
-                .pos-strut {
-                    width: 32px;
-                    height: 32px;
-                    border: 1px solid #d1d5db;
-                    background: #f9fafb;
-                    border-radius: 4px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                }
-                
-                .pos-strut:hover { border-color: #3b82f6; }
-                .pos-strut.active {
-                    background: #eff6ff;
-                    border-color: #3b82f6;
-                    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-                }
-                
-                .pos-strut .dot {
-                    width: 8px;
-                    height: 8px;
-                    background: #d1d5db;
-                    border-radius: 50%;
-                }
-                
-                .pos-strut.active .dot { background: #3b82f6; }
-                
-                .bg-preview-hero {
-                    width: 100%;
-                    aspect-ratio: 16/9;
-                    background-size: cover;
-                    background-repeat: no-repeat;
-                    border-radius: 8px;
-                    border: 1px solid #e2e8f0;
-                    position: relative;
-                    overflow: hidden;
-                }
-                
-                .preview-overlay {
-                    position: absolute;
-                    inset: 0;
-                    background: rgba(15, 23, 42, 0.5);
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    color: white;
-                    text-align: center;
-                    padding: 1rem;
-                }
-                
-                .preview-overlay h4 { font-size: 1.2rem; margin-bottom: 0.25rem; }
-                .preview-overlay p { font-size: 0.8rem; opacity: 0.9; }
-                
-                .preview-label { dislay: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.875rem; color: #374151; }
-                
-                 /* Loading spinner styles */
-                 .site-manager-loading {
-                     display: flex;
-                     justify-content: center;
-                     align-items: center;
-                     padding: 4rem 0;
-                     color: #0f172a;
-                 }
-                 .loading-content {
-                     display: flex;
-                     flex-direction: column;
-                     align-items: center;
-                     gap: 20px;
-                 }
-                 .site-manager-loading .spinner {
-                     border: 4px solid #e2e8f0;
-                     border-top: 4px solid #3b82f6;
-                     border-radius: 50%;
-                     width: 40px;
-                     height: 40px;
-                     animation: spin 1s linear infinite;
-                 }
-                 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-                @media (max-width: 768px) {
-                    .editor-columns { grid-template-columns: 1fr; }
-                }
-            `}</style>
-        </div>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', pt: 2 }}>
+                    <Button
+                        variant="contained"
+                        size="large"
+                        startIcon={saving ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
+                        disabled={saving}
+                        onClick={handleSave}
+                        sx={{ px: 4, borderRadius: 2 }}
+                    >
+                        {saving ? 'Salvando...' : 'Salvar Alterações'}
+                    </Button>
+                </Box>
+            </Stack>
+        </Box>
     );
 };

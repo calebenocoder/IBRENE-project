@@ -18,7 +18,23 @@ import {
 } from '@dnd-kit/sortable';
 import { SortableModule } from './SortableModule';
 import { SortableLesson } from './SortableLesson';
-import { ConfirmationModal } from '../ConfirmationModal';
+import {
+  Box,
+  Typography,
+  Stack,
+  Button,
+  IconButton,
+  TextField,
+  Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions
+} from '@mui/material';
+import {
+  Add as AddIcon
+} from '@mui/icons-material';
 
 interface Module {
   id: string;
@@ -60,7 +76,6 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({
   const [moduleLessons, setModuleLessons] = useState<Record<string, Lesson[]>>({});
   const [editingModuleId, setEditingModuleId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
-  const [showAddLessonMenu, setShowAddLessonMenu] = useState<string | null>(null);
 
   // New State for Confirmation Modal
   const [confirmModal, setConfirmModal] = useState<{
@@ -406,539 +421,161 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({
   };
 
   return (
-    <div className="module-manager">
-      <div className="manager-header">
-        <h3>Módulos</h3>
-        <button
-          className="btn-add-module"
+    <Paper
+      variant="outlined"
+      sx={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        borderRadius: 3,
+        overflow: 'hidden',
+        border: '1px solid',
+        borderColor: 'divider',
+        bgcolor: 'background.paper'
+      }}
+    >
+      <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h6" fontWeight="bold">Módulos</Typography>
+        <IconButton
+          color="primary"
           onClick={() => setShowAddModule(!showAddModule)}
-          title="Adicionar Módulo"
+          sx={{ bgcolor: 'primary.light', color: 'white', '&:hover': { bgcolor: 'primary.main' }, width: 32, height: 32 }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="btn-icon">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-        </button>
-      </div>
+          <AddIcon />
+        </IconButton>
+      </Box>
 
       {showAddModule && (
-        <div className="add-module-form">
-          <input
-            type="text"
+        <Box sx={{ p: 2, bgcolor: 'grey.50', borderBottom: '1px solid', borderColor: 'divider' }}>
+          <TextField
+            fullWidth
+            size="small"
             placeholder="Nome do módulo"
             value={newModuleTitle}
             onChange={(e) => setNewModuleTitle(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAddModule()}
             autoFocus
+            sx={{ mb: 1, bgcolor: 'white' }}
           />
-          <div className="form-actions">
-            <button className="btn-save" onClick={handleAddModule}>Salvar</button>
-            <button className="btn-cancel" onClick={() => setShowAddModule(false)}>Cancelar</button>
-          </div>
-        </div>
+          <Stack direction="row" spacing={1} justifyContent="flex-end">
+            <Button size="small" variant="contained" onClick={handleAddModule} sx={{ textTransform: 'none' }}>Salvar</Button>
+            <Button size="small" variant="outlined" onClick={() => setShowAddModule(false)} color="inherit" sx={{ textTransform: 'none' }}>Cancelar</Button>
+          </Stack>
+        </Box>
       )}
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={(args) => {
-          // pointerWithin is better for large items, closestCenter is better for lists
-          // but we prioritize type filtering first.
+      <Box sx={{ flex: 1, overflowY: 'auto', p: 1.5 }}>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={(args) => {
+            const { active, droppableContainers, pointerCoordinates } = args;
+            if (!pointerCoordinates) return [];
+            const activeData = active.data.current;
+            const activeType = activeData?.type;
 
-          const { active, droppableContainers, pointerCoordinates } = args;
+            if (activeType === 'module') {
+              const moduleContainers = droppableContainers.filter(c => c.data.current?.type === 'module');
+              return closestCenter({ ...args, droppableContainers: moduleContainers });
+            }
 
-          if (!pointerCoordinates) return [];
-
-          const activeData = active.data.current;
-          const activeType = activeData?.type;
-
-          if (activeType === 'module') {
-            // If dragging a module, ONLY collide with other modules
-            const moduleContainers = droppableContainers.filter(
-              c => c.data.current?.type === 'module'
-            );
-            return closestCenter({
-              ...args,
-              droppableContainers: moduleContainers
-            });
-          }
-
-          if (activeType === 'lesson') {
-            // Allow colliding with both lessons and modules to enable moving between modules
-            const validContainers = droppableContainers.filter(
-              c => c.data.current?.type === 'lesson' || c.data.current?.type === 'module'
-            );
-            return closestCenter({
-              ...args,
-              droppableContainers: validContainers
-            });
-          }
-
-          // Fallback
-          return closestCenter(args);
-        }}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
-        autoScroll={true}
-      >
-        <SortableContext
-          items={modules.map(m => m.id)}
-          strategy={verticalListSortingStrategy}
+            if (activeType === 'lesson') {
+              const validContainers = droppableContainers.filter(c => c.data.current?.type === 'lesson' || c.data.current?.type === 'module');
+              return closestCenter({ ...args, droppableContainers: validContainers });
+            }
+            return closestCenter(args);
+          }}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+          autoScroll={true}
         >
-          <div className="modules-list">
-            {modules.map((module) => (
-              <SortableModule
-                key={module.id}
-                module={module}
-                isExpanded={expandedModules.has(module.id)}
-                isSelected={selectedModuleId === module.id}
-                isEditing={editingModuleId === module.id}
-                editingTitle={editingTitle}
-                showAddMenu={showAddLessonMenu === module.id}
-                onToggleExpand={() => toggleModule(module.id)}
-                onSelect={() => onModuleSelect(module)}
-                onStartEdit={() => startEditModule(module)}
-                onSaveEdit={() => saveModuleTitle(module.id)}
-                onCancelEdit={cancelEditModule}
-                onDelete={() => handleDeleteModule(module.id)}
-                onEditTitleChange={setEditingTitle}
-                onToggleAddMenu={() => setShowAddLessonMenu(showAddLessonMenu === module.id ? null : module.id)}
-                onAddLesson={() => {
-                  onModuleSelect(module);
-                  setShowAddLessonMenu(null);
-                  window.dispatchEvent(new CustomEvent('addLesson', { detail: { moduleId: module.id } }));
-                }}
-                onAddQuiz={() => {
-                  onModuleSelect(module);
-                  setShowAddLessonMenu(null);
-                  window.dispatchEvent(new CustomEvent('addQuiz', { detail: { moduleId: module.id } }));
-                }}
-              >
-                {expandedModules.has(module.id) && (
-                  <SortableContext
-                    items={(moduleLessons[module.id] || []).map(l => l.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    <div className="lessons-list">
-                      {moduleLessons[module.id]?.map((lesson) => (
-                        <SortableLesson
-                          key={lesson.id}
-                          lesson={lesson}
-                          onSelect={() => onLessonSelect(lesson)}
-                          onDelete={() => handleDeleteLesson(lesson.id, module.id)}
-                          isSelected={lesson.id === selectedLessonId}
-                        />
-                      ))}
-                      {(!moduleLessons[module.id] || moduleLessons[module.id].length === 0) && (
-                        <div className="empty-lessons">Nenhuma aula ainda</div>
-                      )}
-                    </div>
-                  </SortableContext>
-                )}
-              </SortableModule>
-            ))}
-          </div>
-        </SortableContext>
-      </DndContext>
+          <SortableContext items={modules.map(m => m.id)} strategy={verticalListSortingStrategy}>
+            <Stack spacing={1}>
+              {modules.map((module) => (
+                <SortableModule
+                  key={module.id}
+                  module={module}
+                  isExpanded={expandedModules.has(module.id)}
+                  isSelected={selectedModuleId === module.id}
+                  isEditing={editingModuleId === module.id}
+                  editingTitle={editingTitle}
+                  onToggleExpand={() => toggleModule(module.id)}
+                  onSelect={() => onModuleSelect(module)}
+                  onStartEdit={() => startEditModule(module)}
+                  onSaveEdit={() => saveModuleTitle(module.id)}
+                  onCancelEdit={cancelEditModule}
+                  onDelete={() => handleDeleteModule(module.id)}
+                  onEditTitleChange={setEditingTitle}
+                  onAddLesson={() => {
+                    onModuleSelect(module);
+                    window.dispatchEvent(new CustomEvent('addLesson', { detail: { moduleId: module.id } }));
+                  }}
+                  onAddQuiz={() => {
+                    onModuleSelect(module);
+                    window.dispatchEvent(new CustomEvent('addQuiz', { detail: { moduleId: module.id } }));
+                  }}
+                >
+                  {expandedModules.has(module.id) && (
+                    <SortableContext
+                      items={(moduleLessons[module.id] || []).map(l => l.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <Box sx={{ pl: 3, mt: 0.5, mb: 1 }}>
+                        <Stack spacing={0.5}>
+                          {moduleLessons[module.id]?.map((lesson) => (
+                            <SortableLesson
+                              key={lesson.id}
+                              lesson={lesson}
+                              onSelect={() => onLessonSelect(lesson)}
+                              onDelete={() => handleDeleteLesson(lesson.id, module.id)}
+                              isSelected={lesson.id === selectedLessonId}
+                            />
+                          ))}
+                          {(!moduleLessons[module.id] || moduleLessons[module.id].length === 0) && (
+                            <Typography variant="body2" color="text.secondary" fontStyle="italic" sx={{ p: 1, textAlign: 'center' }}>
+                              Nenhuma aula ainda
+                            </Typography>
+                          )}
+                        </Stack>
+                      </Box>
+                    </SortableContext>
+                  )}
+                </SortableModule>
+              ))}
+            </Stack>
+          </SortableContext>
+        </DndContext>
+      </Box>
 
-      <ConfirmationModal
-        isOpen={confirmModal.isOpen}
+      <Dialog
+        open={confirmModal.isOpen}
         onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
-        onConfirm={() => {
-          if (confirmModal.type === 'module' && confirmModal.id) {
-            executeDeleteModule(confirmModal.id);
-          } else if (confirmModal.type === 'lesson' && confirmModal.id && confirmModal.moduleId) {
-            executeDeleteLesson(confirmModal.id, confirmModal.moduleId);
-          }
-        }}
-        title={confirmModal.title}
-        message={confirmModal.message}
-        isDangerous={true}
-        confirmText="Excluir"
-      />
-
-      <style>{`
-        .module-manager {
-          display: flex;
-          flex-direction: column;
-          height: 100%;
-          background: white;
-          border-radius: 12px;
-          overflow: hidden;
-          width: 100%;
-          max-width: 100vw;
-        }
-
-        .manager-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 16px 20px;
-          border-bottom: 1px solid #e2e8f0;
-        }
-
-        .manager-header h3 {
-          margin: 0;
-          font-size: 1.1rem;
-          font-weight: 700;
-          color: #1a1a1a;
-        }
-
-        .btn-add-module {
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          background: #007bff;
-          color: white;
-          border: none;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: all 0.2s;
-          padding: 0;
-        }
-
-        .btn-add-module:hover {
-          background: #0056b3;
-          transform: scale(1.1);
-        }
-
-        .add-module-form {
-          padding: 12px 20px;
-          background: #f8fafc;
-          border-bottom: 1px solid #e2e8f0;
-        }
-
-        .add-module-form input {
-          width: 100%;
-          padding: 8px 12px;
-          border: 1px solid #cbd5e1;
-          border-radius: 6px;
-          font-size: 0.9rem;
-          margin-bottom: 8px;
-        }
-
-        .form-actions {
-          display: flex;
-          gap: 8px;
-          justify-content: flex-end;
-        }
-
-        .form-actions button {
-          padding: 6px 12px;
-          border-radius: 6px;
-          border: none;
-          font-size: 0.85rem;
-          cursor: pointer;
-          font-weight: 600;
-        }
-
-        .btn-save {
-          background: #007bff;
-          color: white;
-        }
-
-        .btn-cancel {
-          background: #e2e8f0;
-          color: #475569;
-        }
-
-        .modules-list {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-          padding: 12px;
-          overflow-y: auto;
-          flex: 1;
-        }
-
-        .module-item {
-          border-radius: 8px;
-          overflow: hidden;
-        }
-
-        .module-header {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 12px;
-          cursor: pointer;
-          transition: all 0.2s;
-          border-radius: 8px;
-        }
-
-        .module-header:hover {
-          background: #f8fafc;
-        }
-
-        .module-header.selected {
-          background: #eff6ff;
-          color: #007bff;
-        }
-
-        .expand-icon {
-          font-size: 0.7rem;
-          color: #94a3b8;
-        }
-
-        .drag-handle {
-          font-size: 0.9rem;
-          color: #cbd5e1;
-          cursor: grab;
-          user-select: none;
-        }
-
-        .drag-handle:active {
-          cursor: grabbing;
-        }
-
-        .expand-area {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          padding: 4px;
-          margin-left: -4px;
-          border-radius: 4px;
-        }
-
-        .expand-area:hover {
-          background: #e2e8f0;
-        }
-
-        .module-title {
-          flex: 1;
-          font-weight: 600;
-          font-size: 0.95rem;
-          cursor: pointer;
-        }
-
-        .module-actions {
-          display: flex;
-          gap: 4px;
-          align-items: center;
-        }
-
-        .btn-add-lesson {
-          width: 24px;
-          height: 24px;
-          border-radius: 50%;
-          background: #3b82f6;
-          color: white;
-          border: none;
-          cursor: pointer;
-          opacity: 0;
-          transition: all 0.2s;
-          font-size: 1.1rem;
-          line-height: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .module-header:hover .btn-add-lesson,
-        @media (max-width: 1024px) {
-          .btn-add-lesson {
-            opacity: 1;
-          }
-        }
-
-        .btn-add-lesson:hover {
-          background: #2563eb;
-          transform: scale(1.1);
-        }
-
-        .btn-delete-module {
-          background: none;
-          border: none;
-          cursor: pointer;
-          opacity: 0;
-          transition: opacity 0.2s;
-          font-size: 1rem;
-        }
-
-        .module-header:hover .btn-delete-module,
-        @media (max-width: 1024px) {
-          .btn-delete-module {
-            opacity: 1;
-          }
-        }
-
-        .btn-edit-module {
-          background: none;
-          border: none;
-          cursor: pointer;
-          opacity: 0;
-          transition: opacity 0.2s;
-          font-size: 1.1rem;
-          color: #3b82f6;
-          padding: 0 4px;
-        }
-
-        .module-header:hover .btn-edit-module,
-        @media (max-width: 1024px) {
-          .btn-edit-module {
-            opacity: 1;
-          }
-        }
-
-        .add-lesson-menu {
-          background: white;
-          border: 1px solid #e2e8f0;
-          border-radius: 8px;
-          padding: 4px;
-          margin: 4px 0 4px 12px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        .menu-item {
-          display: block;
-          width: 100%;
-          padding: 8px 12px;
-          border: none;
-          background: none;
-          text-align: left;
-          cursor: pointer;
-          border-radius: 6px;
-          transition: background 0.2s;
-          font-size: 0.9rem;
-        }
-
-        .menu-item:hover {
-          background: #f8fafc;
-        }
-
-        .module-edit-inline {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 12px;
-          background: #f8fafc;
-          border-radius: 8px;
-          border: 2px solid #3b82f6;
-        }
-
-        .module-title-input {
-          flex: 1;
-          padding: 8px 12px;
-          border: 1px solid #cbd5e1;
-          border-radius: 6px;
-          font-size: 0.95rem;
-          font-weight: 600;
-        }
-
-        .btn-save-module,
-        .btn-cancel-module {
-          width: 32px;
-          height: 32px;
-          border-radius: 6px;
-          border: none;
-          font-size: 1.2rem;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: all 0.2s;
-        }
-
-        .btn-save-module {
-          background: #22c55e;
-          color: white;
-        }
-
-        .btn-save-module:hover {
-          background: #16a34a;
-        }
-
-        .btn-cancel-module {
-          background: #ef4444;
-          color: white;
-        }
-
-        .btn-cancel-module:hover {
-          background: #dc2626;
-        }
-
-        .lessons-list {
-          padding-left: 24px;
-          margin-top: 4px;
-        }
-
-        .lesson-item {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 8px 12px;
-          cursor: pointer;
-          border-radius: 6px;
-          transition: all 0.2s;
-          margin-bottom: 2px;
-        }
-
-        .lesson-item:hover {
-          background: #f1f5f9;
-        }
-
-        .lesson-item.selected {
-          background: #eff6ff;
-          color: #007bff;
-        }
-
-        .lesson-item.selected .lesson-title {
-          color: #007bff;
-          font-weight: 500;
-        }
-
-        .lesson-icon {
-          font-size: 0.9rem;
-        }
-
-        .drag-handle-lesson {
-          font-size: 0.75rem;
-          color: #cbd5e1;
-          cursor: grab;
-          user-select: none;
-          opacity: 0;
-          transition: opacity 0.2s;
-          padding: 8px; /* Increased padding for larger hit area */
-          margin: -8px; /* Negative margin to offset padding so it doesn't affect layout */
-        }
-
-        .lesson-item:hover .drag-handle-lesson {
-          opacity: 1;
-        }
-
-        .drag-handle-lesson:active {
-          cursor: grabbing;
-        }
-
-        .lesson-title {
-          flex: 1;
-          font-size: 0.9rem;
-          color: #475569;
-        }
-
-        .btn-delete-lesson {
-          background: none;
-          border: none;
-          cursor: pointer;
-          opacity: 0;
-          color: #ef4444;
-          font-size: 1.2rem;
-          line-height: 1;
-        }
-
-        .lesson-item:hover .btn-delete-lesson {
-          opacity: 1;
-        }
-
-        .empty-lessons {
-          padding: 12px;
-          text-align: center;
-          color: #94a3b8;
-          font-size: 0.85rem;
-          font-style: italic;
-        }
-      `}</style>
-    </div>
+      >
+        <DialogTitle>{confirmModal.title}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>{confirmModal.message}</DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, pt: 0 }}>
+          <Button onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))} color="inherit" sx={{ textTransform: 'none' }}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={() => {
+              if (confirmModal.type === 'module' && confirmModal.id) {
+                executeDeleteModule(confirmModal.id);
+              } else if (confirmModal.type === 'lesson' && confirmModal.id && confirmModal.moduleId) {
+                executeDeleteLesson(confirmModal.id, confirmModal.moduleId);
+              }
+              setConfirmModal(prev => ({ ...prev, isOpen: false }));
+            }}
+            color="error"
+            variant="contained"
+            disableElevation
+            sx={{ textTransform: 'none' }}
+          >
+            Excluir
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Paper>
   );
 };

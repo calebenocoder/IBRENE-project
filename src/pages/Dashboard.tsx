@@ -4,6 +4,33 @@ import { useNavigate, Link } from 'react-router-dom';
 import logo from '../assets/logo.png';
 import { CertificateModal } from '../components/CertificateModal';
 import { UserSettingsModal } from '../components/UserSettingsModal';
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  Container,
+  Box,
+  Grid,
+  Card,
+  CardMedia,
+  CardContent,
+  LinearProgress,
+  Stack,
+  TextField,
+  InputAdornment,
+  Avatar,
+  IconButton,
+  Tooltip,
+  CircularProgress
+} from '@mui/material';
+import {
+  Search as SearchIcon,
+  Settings as SettingsIcon,
+  WorkspacePremium as CertificateIcon,
+  AdminPanelSettings as AdminIcon,
+  Logout as LogoutIcon
+} from '@mui/icons-material';
 
 interface Course {
   id: string; // Supabase uses UUID strings
@@ -162,164 +189,178 @@ export const Dashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="dashboard-loading">
-        <div className="loading-content">
-          <div className="spinner"></div>
-          <p>Carregando seus cursos...</p>
-        </div>
-        <style>{`
-          .dashboard-loading {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #f8fafc;
-          }
-
-          .loading-content {
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
-          }
-
-          .dashboard-loading p {
-            color: #0f172a;
-            font-size: 1.25rem;
-            font-weight: 500;
-          }
-
-          .spinner {
-            width: 48px;
-            height: 48px;
-            border: 4px solid #e2e8f0;
-            border-top: 4px solid #3b82f6;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-          }
-
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
-      </div>
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'background.default' }}>
+        <Stack alignItems="center" spacing={2}>
+          <CircularProgress size={48} />
+          <Typography variant="h6" color="text.secondary">
+            Carregando seus cursos...
+          </Typography>
+        </Stack>
+      </Box>
     );
   }
 
   return (
-    <div className="dashboard-page">
-      {/* Fixed Header with Logo and Logout */}
-      <div className="dashboard-top-header animate-intro">
-        <div className="dashboard-top-container">
-          <Link to="/" className="dashboard-logo">
-            <img src={logo} alt="IBRENE Logo" />
-          </Link>
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            {isAdmin && (
-              <button
-                className="btn-admin-access"
-                onClick={() => navigate('/admin')}
+    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: 'background.default' }}>
+      {/* AppBar */}
+      <AppBar position="sticky" color="inherit" elevation={1} sx={{ bgcolor: 'background.paper' }}>
+        <Container maxWidth="lg">
+          <Toolbar disableGutters sx={{ justifyContent: 'space-between' }}>
+            <Stack direction="row" alignItems="center" component={Link} to="/" sx={{ textDecoration: 'none' }}>
+              <img src={logo} alt="IBRENE Logo" style={{ height: 40, width: 'auto' }} />
+            </Stack>
+
+            <Stack direction="row" spacing={2} alignItems="center">
+              {isAdmin && (
+                <Button
+                  component={Link}
+                  to="/admin"
+                  variant="contained"
+                  color="secondary"
+                  size="small"
+                  startIcon={<AdminIcon />}
+                >
+                  Painel Admin
+                </Button>
+              )}
+              <Button
+                onClick={handleLogout}
+                variant="text"
+                color="inherit"
+                size="small"
+                startIcon={<LogoutIcon />}
+                sx={{ '&:hover': { color: 'error.main' } }}
               >
-                Painel Admin
-              </button>
-            )}
-            <button className="btn-logout" onClick={handleLogout}>Sair</button>
-          </div>
-        </div>
-      </div>
+                Sair
+              </Button>
+            </Stack>
+          </Toolbar>
+        </Container>
+      </AppBar>
 
-      <div className="dashboard-container">
-        <header className="dashboard-header animate-intro">
-          <div>
-            <h1>Painel do Aluno</h1>
-            <p className="welcome-text">Bem-vindo de volta, {userName}.</p>
-          </div>
+      {/* Main Content */}
+      <Box component="main" sx={{ flexGrow: 1, py: 4 }}>
+        <Container maxWidth="lg">
 
-          <div className="header-actions">
-            <button
-              className="btn-settings"
-              onClick={() => setIsSettingsOpen(true)}
-              title="Configurações do Perfil"
-            >
-              ⚙️
-            </button>
-            <div className="user-avatar">{userInitials}</div>
-          </div>
-        </header>
+          {/* Header Card */}
+          <Card sx={{ mb: 4, p: { xs: 3, md: 4 }, borderRadius: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={3}>
+              <Box>
+                <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom>
+                  Painel do Aluno
+                </Typography>
+                <Typography variant="body1" color="text.secondary">
+                  Bem-vindo de volta, {userName}.
+                </Typography>
+              </Box>
+              <Stack direction="row" spacing={2} alignItems="center">
+                <Tooltip title="Configurações do Perfil">
+                  <IconButton onClick={() => setIsSettingsOpen(true)} size="large" sx={{ bgcolor: 'action.hover' }}>
+                    <SettingsIcon />
+                  </IconButton>
+                </Tooltip>
+                <Avatar sx={{ width: 56, height: 56, bgcolor: 'primary.main', fontWeight: 'bold' }}>
+                  {userInitials}
+                </Avatar>
+              </Stack>
+            </Stack>
+          </Card>
 
-        <section className="courses-section">
-          <div className="section-header animate-intro-delay-1">
-            <h2 className="section-title">Meus Cursos</h2>
-
-            <div className="search-bar-container">
-              <span className="search-icon">🔍</span>
-              <input
-                type="text"
+          {/* Courses Section */}
+          <Box sx={{ mb: 4 }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={2} sx={{ mb: 4 }}>
+              <Typography variant="h5" component="h2" fontWeight="bold">
+                Meus Cursos
+              </Typography>
+              <TextField
                 placeholder="Buscar meus cursos..."
-                className="search-input"
+                variant="outlined"
+                size="small"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon color="action" />
+                    </InputAdornment>
+                  ),
+                  sx: { borderRadius: 50, bgcolor: 'background.paper' }
+                }}
+                sx={{ width: { xs: '100%', sm: 300 } }}
               />
-            </div>
-          </div>
+            </Stack>
 
-          {filteredCourses.length === 0 ? (
-            <div className="text-center" style={{ color: '#666', padding: '2rem' }}>
-              <p>
-                {searchQuery
-                  ? `Nenhum curso encontrado para "${searchQuery}"`
-                  : "Nenhum curso encontrado. Verifique seu banco de dados."
-                }
-              </p>
-            </div>
-          ) : (
-            <div className="courses-grid animate-intro-delay-2">
-              {filteredCourses.map(course => (
-                <div key={course.id} className="course-card">
-                  <div
-                    className="course-image"
-                    style={{ background: course.gradient_css || '#eee' }}
-                  ></div>
-                  <div className="course-content">
-                    <h3 className="course-title">{course.title}</h3>
-                    <p className="course-instructor">{course.instructor || 'Instrutor IBRENE'}</p>
+            {filteredCourses.length === 0 ? (
+              <Box sx={{ textAlign: 'center', py: 8 }}>
+                <Typography variant="body1" color="text.secondary">
+                  {searchQuery
+                    ? `Nenhum curso encontrado para "${searchQuery}"`
+                    : "Nenhum curso encontrado."
+                  }
+                </Typography>
+              </Box>
+            ) : (
+              <Grid container spacing={3}>
+                {filteredCourses.map(course => (
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={course.id}>
+                    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 3, transition: 'transform 0.2s', '&:hover': { transform: 'translateY(-4px)', boxShadow: 6 } }}>
+                      <CardMedia
+                        component="div"
+                        sx={{ height: 160, background: course.gradient_css || 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' }}
+                      />
+                      <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 3 }}>
+                        <Typography variant="h6" component="h3" fontWeight="bold" gutterBottom sx={{ overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                          {course.title}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                          {course.instructor || 'Instrutor IBRENE'}
+                        </Typography>
 
-                    <div className="progress-container">
-                      <div className="progress-bar-bg">
-                        <div
-                          className="progress-bar-fill"
-                          style={{ width: `${course.progress}%` }}
-                        ></div>
-                      </div>
-                      <span className="progress-text">{course.progress}% concluído</span>
-                    </div>
+                        <Box sx={{ mt: 'auto', pt: 2 }}>
+                          <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
+                            <Typography variant="caption" color="text.secondary" fontWeight="medium">
+                              {course.progress}% concluído
+                            </Typography>
+                          </Stack>
+                          <LinearProgress
+                            variant="determinate"
+                            value={course.progress}
+                            sx={{ height: 8, borderRadius: 4, mb: 3 }}
+                          />
 
-                    <div className="course-actions">
-                      <button
-                        className="btn-continue"
-                        onClick={() => navigate(`/course/${course.id}`)}
-                      >
-                        {course.progress > 0 ? 'Continuar' : 'Iniciar'}
-                      </button>
+                          <Stack spacing={1.5}>
+                            <Button
+                              variant={course.progress > 0 ? "outlined" : "contained"}
+                              color="primary"
+                              fullWidth
+                              onClick={() => navigate(`/course/${course.id}`)}
+                              disableElevation
+                            >
+                              {course.progress > 0 ? 'Continuar' : 'Iniciar'}
+                            </Button>
 
-                      {course.certificate_id && (
-                        <button
-                          className="btn-certificate"
-                          onClick={() => setSelectedCertificateId(course.certificate_id!)}
-                        >
-                          🏅 Certificado
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-      </div>
+                            {course.certificate_id && (
+                              <Button
+                                variant="text"
+                                color="primary"
+                                fullWidth
+                                startIcon={<CertificateIcon />}
+                                onClick={() => setSelectedCertificateId(course.certificate_id!)}
+                              >
+                                Certificado
+                              </Button>
+                            )}
+                          </Stack>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            )}
+          </Box>
+        </Container>
+      </Box>
 
       {selectedCertificateId && (
         <CertificateModal
@@ -333,313 +374,6 @@ export const Dashboard: React.FC = () => {
         onClose={() => setIsSettingsOpen(false)}
         uid={userId}
       />
-
-      <style>{`
-        .dashboard-page {
-          min-height: 100vh;
-          padding-top: 140px; /* Space for navbar */
-          padding-bottom: 40px;
-          background-color: #f5f5f7; /* Solid off-white background */
-          position: relative;
-          z-index: 1; /* Ensure it sits on top of the fixed body background */
-        }
-
-        .dashboard-top-header {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          z-index: 1001;
-          background: white;
-          border-bottom: 1px solid #e2e8f0;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-
-        .dashboard-top-container {
-          max-width: 1400px;
-          margin: 0 auto;
-          padding: 1rem 2rem;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 1.5rem;
-        }
-
-        @media (max-width: 640px) {
-          .dashboard-top-container {
-            padding: 0.75rem 1rem;
-            gap: 0.75rem;
-          }
-        }
-
-        .dashboard-logo img {
-          height: 40px;
-          width: auto;
-          display: block;
-        }
-
-        @media (max-width: 640px) {
-          .dashboard-logo img {
-            height: 30px;
-          }
-        }
-
-        .btn-logout {
-          background: #007bff;
-          color: white;
-          border: none;
-          padding: 10px 24px;
-          border-radius: 8px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s;
-          font-size: 0.95rem;
-          white-space: nowrap;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          height: 42px;
-        }
-
-        .btn-logout:hover {
-          background: #0056b3;
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-        }
-
-        @media (max-width: 640px) {
-          .btn-logout {
-            padding: 0 12px;
-            font-size: 0.85rem;
-            height: 36px;
-          }
-        }
-
-        .btn-admin-access {
-          background: #10b981; /* Emerald green for differentiation */
-          color: white;
-          border: none;
-          padding: 10px 24px;
-          border-radius: 8px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s;
-          font-size: 0.95rem;
-          white-space: nowrap;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          height: 42px;
-        }
-
-        .btn-admin-access:hover {
-          background: #059669;
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-        }
-
-        @media (max-width: 640px) {
-          .btn-admin-access {
-            padding: 0 12px;
-            font-size: 0.85rem;
-            height: 36px;
-          }
-        }
-
-        .dashboard-container {
-          width: 90%;
-          max-width: 1200px;
-          margin: 0 auto;
-        }
-
-        .dashboard-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 3rem;
-          background: rgba(255, 255, 255, 0.95);
-          padding: 2rem;
-          border-radius: 16px;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-        }
-
-        .dashboard-header h1 {
-          font-size: 2rem;
-          color: #1a1a1a;
-          margin-bottom: 0.5rem;
-        }
-
-        .welcome-text {
-          color: #666;
-        }
-
-        .header-actions {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-        }
-
-        .btn-settings {
-          background: #f3f4f6;
-          border: none;
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          cursor: pointer;
-          font-size: 1.2rem;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: background 0.2s;
-        }
-        .btn-settings:hover {
-          background: #e5e7eb;
-        }
-
-        .user-avatar {
-          width: 50px;
-          height: 50px;
-          border-radius: 50%;
-          background: #007bff;
-          color: white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 700;
-          font-size: 1.2rem;
-        }
-
-        .section-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 1.5rem;
-          flex-wrap: wrap;
-          gap: 1rem;
-        }
-
-        .section-title {
-          font-size: 1.5rem;
-          color: #1a1a1a;
-          margin: 0;
-          font-weight: 600;
-          text-shadow: none;
-        }
-
-        .search-bar-container {
-          position: relative;
-          min-width: 300px;
-        }
-
-        .search-input {
-          width: 100%;
-          padding: 0.75rem 1rem 0.75rem 2.5rem;
-          border-radius: 99px; /* Pill shape */
-          border: 1px solid #e2e8f0;
-          background: white;
-          font-size: 0.95rem;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-          transition: all 0.2s;
-        }
-        
-        .search-input:focus {
-          outline: none;
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        .search-icon {
-          position: absolute;
-          left: 1rem;
-          top: 50%;
-          transform: translateY(-50%);
-          color: #9ca3af;
-          pointer-events: none;
-        }
-
-        .courses-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 2rem;
-        }
-
-        .course-card {
-          background: white;
-          border-radius: 16px;
-          overflow: hidden;
-          transition: transform 0.3s ease, box-shadow 0.3s ease;
-          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-          border: 1px solid rgba(0,0,0,0.05);
-        }
-
-        .course-card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 12px 24px rgba(0,0,0,0.15);
-        }
-
-        .course-image {
-          height: 140px;
-          width: 100%;
-        }
-
-        .course-content {
-          padding: 1.5rem;
-        }
-
-        .course-title {
-          font-size: 1.1rem;
-          font-weight: 600;
-          color: #333;
-          margin-bottom: 0.5rem;
-        }
-
-        .course-instructor {
-          font-size: 0.9rem;
-          color: #888;
-          margin-bottom: 1rem;
-        }
-
-        .progress-container {
-          margin-bottom: 1.5rem;
-        }
-
-        .progress-bar-bg {
-          height: 6px;
-          background: #f0f0f0;
-          border-radius: 3px;
-          overflow: hidden;
-          margin-bottom: 0.5rem;
-        }
-
-        .progress-bar-fill {
-          height: 100%;
-          background: #007bff;
-          border-radius: 3px;
-          transition: width 1s ease-out;
-        }
-
-        .progress-text {
-          font-size: 0.8rem;
-          color: #666;
-        }
-
-        .btn-continue {
-          width: 100%;
-          padding: 10px;
-          background: transparent;
-          border: 1px solid #007bff;
-          color: #007bff;
-          border-radius: 8px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .btn-continue:hover {
-          background: #007bff;
-          color: white;
-        }
-      `}</style>
-    </div >
+    </Box>
   );
 };

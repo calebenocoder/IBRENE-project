@@ -1,6 +1,31 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import {
+    Paper,
+    Box,
+    Stack,
+    Typography,
+    IconButton,
+    TextField,
+    Tooltip,
+    Menu,
+    MenuItem,
+    ListItemIcon,
+    ListItemText
+} from '@mui/material';
+import {
+    DragIndicator as DragIcon,
+    ExpandMore as ExpandIcon,
+    ChevronRight as ChevronIcon,
+    Add as AddIcon,
+    Edit as EditIcon,
+    Delete as DeleteIcon,
+    Description as LessonIcon,
+    Quiz as QuizIcon,
+    Check as SaveIcon,
+    Close as CancelIcon
+} from '@mui/icons-material';
 
 interface Module {
     id: string;
@@ -14,7 +39,6 @@ interface SortableModuleProps {
     isSelected: boolean;
     isEditing: boolean;
     editingTitle: string;
-    showAddMenu: boolean;
     onToggleExpand: () => void;
     onSelect: () => void;
     onStartEdit: () => void;
@@ -22,7 +46,6 @@ interface SortableModuleProps {
     onCancelEdit: () => void;
     onDelete: () => void;
     onEditTitleChange: (value: string) => void;
-    onToggleAddMenu: () => void;
     onAddLesson: () => void;
     onAddQuiz: () => void;
     children?: React.ReactNode;
@@ -34,7 +57,6 @@ export const SortableModule: React.FC<SortableModuleProps> = ({
     isSelected,
     isEditing,
     editingTitle,
-    showAddMenu,
     onToggleExpand,
     onSelect,
     onStartEdit,
@@ -42,11 +64,13 @@ export const SortableModule: React.FC<SortableModuleProps> = ({
     onCancelEdit,
     onDelete,
     onEditTitleChange,
-    onToggleAddMenu,
     onAddLesson,
     onAddQuiz,
     children,
 }) => {
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const openMenu = Boolean(anchorEl);
+
     const {
         attributes,
         listeners,
@@ -66,83 +90,123 @@ export const SortableModule: React.FC<SortableModuleProps> = ({
         transform: CSS.Transform.toString(transform),
         transition,
         opacity: isDragging ? 0.5 : 1,
+        position: 'relative' as const,
+        zIndex: isDragging ? 1000 : 1,
+    };
+
+    const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+        event.stopPropagation();
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleMenuClose = () => {
+        setAnchorEl(null);
     };
 
     return (
-        <div ref={setNodeRef} style={style} className="module-item">
-            {isEditing ? (
-                <div className="module-edit-inline">
-                    <input
-                        type="text"
-                        value={editingTitle}
-                        onChange={(e) => onEditTitleChange(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') onSaveEdit();
-                            if (e.key === 'Escape') onCancelEdit();
-                        }}
-                        className="module-title-input"
-                        autoFocus
-                    />
-                    <button className="btn-save-module" onClick={onSaveEdit}>✓</button>
-                    <button className="btn-cancel-module" onClick={onCancelEdit}>×</button>
-                </div>
-            ) : (
-                <div className={`module-header ${isSelected ? 'selected' : ''}`}>
-                    <div className="expand-area" onClick={(e) => { e.stopPropagation(); onToggleExpand(); }}>
-                        <span className="drag-handle" {...attributes} {...listeners}>⋮⋮</span>
-                        <span className="expand-icon">
-                            {isExpanded ? '▼' : '▶'}
-                        </span>
-                    </div>
-                    <span className="module-title" onClick={onSelect}>{module.title}</span>
-                    <div className="module-actions">
-                        <button
-                            className="btn-add-lesson"
-                            onClick={(e) => { e.stopPropagation(); onToggleAddMenu(); }}
-                            title="Adicionar aula ou questionário"
-                        >
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                            </svg>
-                        </button>
-                        <button
-                            className="btn-edit-module"
-                            onClick={(e) => { e.stopPropagation(); onStartEdit(); }}
-                            title="Editar módulo"
-                        >
-                            ✎
-                        </button>
-                        <button
-                            type="button"
-                            className="btn-delete-module"
-                            style={{ position: 'relative', zIndex: 10 }}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                onDelete();
+        <Box ref={setNodeRef} style={style} sx={{ mb: 1 }}>
+            <Paper
+                variant="outlined"
+                sx={{
+                    borderRadius: 2,
+                    borderWidth: isSelected ? 2 : 1,
+                    borderColor: isSelected ? 'primary.main' : 'divider',
+                    bgcolor: isSelected ? 'grey.50' : 'background.paper',
+                    transition: 'all 0.2s',
+                    overflow: 'hidden',
+                    '&:hover': {
+                        borderColor: isSelected ? 'primary.main' : 'grey.400',
+                        '& .module-actions': { opacity: 1 }
+                    }
+                }}
+            >
+                {isEditing ? (
+                    <Stack direction="row" spacing={1} sx={{ p: 1.5, alignItems: 'center' }}>
+                        <TextField
+                            size="small"
+                            fullWidth
+                            value={editingTitle}
+                            onChange={(e) => onEditTitleChange(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') onSaveEdit();
+                                if (e.key === 'Escape') onCancelEdit();
                             }}
-                            onPointerDown={(e) => e.stopPropagation()}
-                            onMouseDown={(e) => e.stopPropagation()}
+                            autoFocus
+                            placeholder="Nome do módulo"
+                        />
+                        <IconButton size="small" color="success" onClick={onSaveEdit}>
+                            <SaveIcon />
+                        </IconButton>
+                        <IconButton size="small" color="error" onClick={onCancelEdit}>
+                            <CancelIcon />
+                        </IconButton>
+                    </Stack>
+                ) : (
+                    <Stack
+                        direction="row"
+                        spacing={1}
+                        sx={{ p: 1.5, alignItems: 'center', cursor: 'pointer' }}
+                        onClick={onSelect}
+                    >
+                        <Stack
+                            direction="row"
+                            alignItems="center"
+                            onClick={(e) => { e.stopPropagation(); onToggleExpand(); }}
+                            sx={{ color: 'grey.500', '&:hover': { color: 'primary.main' } }}
                         >
-                            🗑️
-                        </button>
-                    </div>
-                </div>
-            )}
+                            <Box {...attributes} {...listeners} sx={{ cursor: 'grab', display: 'flex', mr: 0.5 }}>
+                                <DragIcon fontSize="small" />
+                            </Box>
+                            {isExpanded ? <ExpandIcon /> : <ChevronIcon />}
+                        </Stack>
 
-            {showAddMenu && (
-                <div className="add-lesson-menu">
-                    <button className="menu-item" onClick={onAddLesson}>
-                        📄 Nova Aula
-                    </button>
-                    <button className="menu-item" onClick={onAddQuiz}>
-                        📝 Novo Questionário
-                    </button>
-                </div>
-            )}
+                        <Typography
+                            variant="subtitle2"
+                            sx={{ flex: 1, fontWeight: 700, color: 'text.primary' }}
+                        >
+                            {module.title}
+                        </Typography>
+
+                        <Stack direction="row" spacing={0.5} className="module-actions" sx={{ opacity: { xs: 1, sm: 0 }, transition: 'opacity 0.2s' }}>
+                            <Tooltip title="Adicionar Aula/Quiz">
+                                <IconButton size="small" color="primary" onClick={handleMenuClick}>
+                                    <AddIcon fontSize="small" />
+                                </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Editar Módulo">
+                                <IconButton size="small" color="inherit" sx={{ color: 'grey.500' }} onClick={(e) => { e.stopPropagation(); onStartEdit(); }}>
+                                    <EditIcon fontSize="small" />
+                                </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Excluir Módulo">
+                                <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); onDelete(); }}>
+                                    <DeleteIcon fontSize="small" />
+                                </IconButton>
+                            </Tooltip>
+                        </Stack>
+                    </Stack>
+                )}
+
+                <Menu
+                    anchorEl={anchorEl}
+                    open={openMenu}
+                    onClose={handleMenuClose}
+                    onClick={(e) => e.stopPropagation()}
+                    transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                    anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                >
+                    <MenuItem onClick={() => { handleMenuClose(); onAddLesson(); }}>
+                        <ListItemIcon><LessonIcon fontSize="small" /></ListItemIcon>
+                        <ListItemText primary="Nova Aula" />
+                    </MenuItem>
+                    <MenuItem onClick={() => { handleMenuClose(); onAddQuiz(); }}>
+                        <ListItemIcon><QuizIcon fontSize="small" /></ListItemIcon>
+                        <ListItemText primary="Novo Questionário" />
+                    </MenuItem>
+                </Menu>
+            </Paper>
 
             {isExpanded && children}
-        </div>
+        </Box>
     );
 };

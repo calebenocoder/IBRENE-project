@@ -16,6 +16,28 @@ interface Course {
   created_at?: string;
 }
 
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  Tabs,
+  Tab,
+  Box,
+  Container,
+  Stack,
+  Grid,
+  Card,
+  CardMedia,
+  CardContent,
+  CircularProgress,
+  Switch,
+  Chip,
+
+  useTheme,
+  useMediaQuery
+} from '@mui/material';
+
 export const AdminDashboard: React.FC = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,7 +46,10 @@ export const AdminDashboard: React.FC = () => {
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [activeTab, setActiveTab] = useState<'courses' | 'site' | 'posts'>('courses'); // Updated type
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
+  // ... (keep useEffect and fetch logic) ...
   useEffect(() => {
     const fetchAdminData = async () => {
       try {
@@ -98,163 +123,253 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
+  const handleTogglePublished = async (courseId: string, currentStatus: boolean) => {
+    const { error } = await supabase
+      .from('courses')
+      .update({ published: !currentStatus })
+      .eq('id', courseId);
+
+    if (error) {
+      console.error('Error toggling publication status:', error);
+      alert('Erro ao alterar status de publicação.');
+    } else {
+      setCourses(courses.map(c => c.id === courseId ? { ...c, published: !currentStatus } : c));
+    }
+  };
+
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: 'courses' | 'site' | 'posts') => {
+    setActiveTab(newValue);
+  };
+
   if (loading) {
     return (
-      <div className="admin-loading">
-        <div className="loading-content">
-          <div className="spinner"></div>
-          <p>Carregando...</p>
-        </div>
-        <style>{`
-          .admin-loading {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #f8fafc;
-          }
-
-          .loading-content {
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
-          }
-
-          .admin-loading p {
-            color: #0f172a;
-            font-size: 1.25rem;
-            font-weight: 500;
-          }
-
-          .spinner {
-            width: 48px;
-            height: 48px;
-            border: 4px solid #e2e8f0;
-            border-top: 4px solid #3b82f6;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-          }
-
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
-      </div>
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'background.default' }}>
+        <Stack alignItems="center" spacing={2}>
+          <CircularProgress size={48} />
+          <Typography variant="h6" color="text.secondary">
+            Carregando painel admin...
+          </Typography>
+        </Stack>
+      </Box>
     );
   }
 
   return (
-    <div className="admin-dashboard">
-      <header className="dashboard-header animate-intro">
-        <div className="header-container">
-          <div className="header-left">
-            <img src={logo} alt="IBRENE" className="dashboard-logo" />
-            <div className="header-divider"></div>
-            <h1>Painel Administrativo</h1>
-          </div>
-          <div className="header-right">
-            <div className="header-user-info">
-              <span>Olá, <strong>{userName}</strong></span>
-            </div>
-            <div className="header-actions-row">
-              <Link to="/dashboard" className="link-dashboard">Painel Aluno</Link>
-              <Link to="/" className="link-home">Ver Site</Link>
-              <button
-                onClick={async () => { await supabase.auth.signOut(); navigate('/login'); }}
-                className="btn-logout"
-              >
-                Sair
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: 'background.default' }}>
+      <AppBar position="sticky" color="inherit" elevation={1} className="animate-intro">
+        <Container maxWidth="lg">
+          <Toolbar disableGutters sx={{ py: { xs: 3, sm: 1 }, flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center', gap: { xs: 3, sm: 0 } }}>
+            {/* Left Side */}
+            <Stack direction="row" alignItems="center" spacing={2} sx={{ width: { xs: '100%', sm: 'auto' }, justifyContent: { xs: 'center', sm: 'flex-start' } }}>
+              <img src={logo} alt="IBRENE" style={{ height: 32, width: 'auto' }} />
+              <Typography variant="h6" component="h1" sx={{ color: 'text.primary', borderLeft: 1, borderColor: 'divider', pl: 2, display: { xs: 'none', sm: 'block' } }}>
+                Painel Administrativo
+              </Typography>
+              <Typography variant="subtitle1" component="h1" sx={{ color: 'text.primary', fontWeight: 'bold', display: { xs: 'block', sm: 'none' } }}>
+                Painel Admin
+              </Typography>
+            </Stack>
 
-      <div className="tabs-container animate-intro-delay-1">
-        <div className="tabs-header">
-          <button
-            onClick={() => setActiveTab('courses')}
-            className={`tab-button ${activeTab === 'courses' ? 'active' : ''}`}
+            {/* Right Side */}
+            <Stack direction={{ xs: 'column', sm: 'row' }} alignItems="center" spacing={2} sx={{ ml: { sm: 'auto' }, width: { xs: '100%', sm: 'auto' } }}>
+              <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', gap: 1, fontWeight: 500 }}>
+                Olá, <strong>{userName}</strong>
+              </Typography>
+              <Stack direction="row" spacing={1.5} sx={{ width: { xs: '100%', sm: 'auto' }, justifyContent: 'center' }}>
+                <Button component={Link} to="/dashboard" variant="contained" color="primary" size="small" disableElevation sx={{ borderRadius: 2, px: 2 }}>
+                  Painel Aluno
+                </Button>
+                <Button component={Link} to="/" variant="outlined" color="primary" size="small" sx={{ borderRadius: 2, px: 2 }}>
+                  Ver Site
+                </Button>
+                <Button onClick={async () => { await supabase.auth.signOut(); navigate('/login'); }} variant="text" color="inherit" size="small" sx={{ '&:hover': { color: 'error.main' }, fontWeight: 600, ml: 1 }}>
+                  Sair
+                </Button>
+              </Stack>
+            </Stack>
+          </Toolbar>
+        </Container>
+      </AppBar>
+
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }} className="animate-intro-delay-1">
+        <Container maxWidth="lg" disableGutters>
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            variant={isMobile ? 'fullWidth' : 'standard'}
+            centered={!isMobile}
+            textColor="primary"
+            indicatorColor="primary"
           >
-            Gerenciar Cursos
-          </button>
-          <button
-            onClick={() => setActiveTab('posts')}
-            className={`tab-button ${activeTab === 'posts' ? 'active' : ''}`}
-          >
-            Gerenciar Postagens
-          </button>
-          <button
-            onClick={() => setActiveTab('site')}
-            className={`tab-button ${activeTab === 'site' ? 'active' : ''}`}
-          >
-            Gerenciar Site
-          </button>
-        </div>
-      </div>
+            <Tab label="Cursos" value="courses" sx={{ textTransform: 'none', fontWeight: 600, py: 2, fontSize: { xs: '0.85rem', sm: '0.9rem' } }} />
+            <Tab label="Postagens" value="posts" sx={{ textTransform: 'none', fontWeight: 600, py: 2, fontSize: { xs: '0.85rem', sm: '0.9rem' } }} />
+            <Tab label="Site" value="site" sx={{ textTransform: 'none', fontWeight: 600, py: 2, fontSize: { xs: '0.85rem', sm: '0.9rem' } }} />
+          </Tabs>
+        </Container>
+      </Box>
 
-      <main className="dashboard-content animate-intro-delay-2">
-        {activeTab === 'courses' && (
-          <div className="courses-tab">
-            <div className="section-header">
-              <div>
-                <h2>Cursos</h2>
-                <p>Gerencie os cursos disponíveis na plataforma.</p>
-              </div>
-              <button onClick={handleAddCourse} className="btn-primary">
-                + Novo Curso
-              </button>
-            </div>
+      <Box component="main" sx={{ flexGrow: 1, py: 4 }} className="animate-intro-delay-2">
+        <Container maxWidth="lg">
+          {activeTab === 'courses' && (
+            <Box sx={{ mb: 4 }}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={2} sx={{ mb: 4 }}>
+                <Box>
+                  <Typography variant="h5" component="h2" fontWeight="bold" color="text.primary">
+                    Cursos
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                    Gerencie os cursos disponíveis na plataforma.
+                  </Typography>
+                </Box>
+                <Button onClick={handleAddCourse} variant="contained" color="primary" sx={{ width: { xs: '100%', sm: 'auto' } }}>
+                  + Novo Curso
+                </Button>
+              </Stack>
 
-            {courses.length === 0 ? (
-              <div className="empty-courses">
-                <h3>Nenhum curso cadastrado</h3>
-                <p>Comece criando o primeiro curso da plataforma.</p>
-                <button onClick={handleAddCourse} className="btn-primary mt-4">
-                  Criar Curso
-                </button>
-              </div>
-            ) : (
-              <div className="courses-grid">
-                {courses.map((course) => (
-                  <div key={course.id} className="course-card">
-                    <div className="course-banner" style={{ background: course.gradient_css || 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' }}></div>
-                    <div className="course-info">
-                      <div className="course-header-row">
-                        <h3>{course.title}</h3>
-                        <span className={`status-badge ${course.published ? 'published' : 'draft'}`}>
-                          {course.published ? 'Publicado' : 'Rascunho'}
-                        </span>
-                      </div>
-                      <p className="instructor">{course.instructor}</p>
+              {courses.length === 0 ? (
+                <Box sx={{ textAlign: 'center', p: 6, bgcolor: 'background.paper', borderRadius: 2, border: 1, borderColor: 'divider', borderStyle: 'dashed' }}>
+                  <Typography variant="h6" color="text.primary" gutterBottom>
+                    Nenhum curso cadastrado
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" paragraph>
+                    Comece criando o primeiro curso da plataforma.
+                  </Typography>
+                  <Button onClick={handleAddCourse} variant="contained" color="primary" sx={{ mt: 2 }}>
+                    Criar Curso
+                  </Button>
+                </Box>
+              ) : (
+                <Grid container spacing={3}>
+                  {courses.map((course) => (
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }} key={course.id}>
+                      <Card sx={{
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        borderRadius: 3,
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        transition: 'transform 0.2s, box-shadow 0.2s',
+                        '&:hover': {
+                          transform: 'translateY(-4px)',
+                          boxShadow: '0 8px 24px rgba(0,0,0,0.1)'
+                        }
+                      }}>
+                        <CardMedia
+                          component="div"
+                          sx={{
+                            height: 140,
+                            background: course.gradient_css || 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                            position: 'relative'
+                          }}
+                        />
+                        <CardContent sx={{ flexGrow: 1, p: 2.5 }}>
+                          <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 1.5 }}>
+                            <Stack direction="column" spacing={0.5} sx={{ flex: 1, minWidth: 0 }}>
+                              <Typography
+                                variant="h6"
+                                component="h3"
+                                sx={{
+                                  fontWeight: 700,
+                                  fontSize: '1.1rem',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap'
+                                }}
+                              >
+                                {course.title}
+                              </Typography>
+                              <Stack direction="row" spacing={1} alignItems="center">
+                                <Chip
+                                  size="small"
+                                  label={course.published ? 'Publicado' : 'Rascunho'}
+                                  color={course.published ? 'success' : 'default'}
+                                  variant={course.published ? 'filled' : 'outlined'}
+                                  sx={{
+                                    height: 20,
+                                    fontSize: '0.65rem',
+                                    fontWeight: 700,
+                                    textTransform: 'uppercase',
+                                    bgcolor: course.published ? '#dcfce7' : undefined,
+                                    color: course.published ? '#166534' : undefined
+                                  }}
+                                />
 
-                      <div className="course-actions">
-                        <Link to={`/admin/course/${course.id}/builder`} className="btn-action primary">
-                          Editar Conteúdo
-                        </Link>
-                        <button onClick={() => handleEditCourse(course)} className="btn-action secondary">
-                          Config
-                        </button>
-                        <button onClick={() => handleDeleteCourse(course.id)} className="btn-action danger">
-                          Excluir
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+                              </Stack>
+                            </Stack>
+                            <Switch
+                              checked={course.published}
+                              onChange={() => handleTogglePublished(course.id, course.published)}
+                              color="primary"
+                            />
+                          </Stack>
 
-        {/* Render New PostsManager Tab */}
-        {activeTab === 'posts' && <PostsManager />}
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                            {course.instructor}
+                          </Typography>
 
-        {activeTab === 'site' && <SiteManager />}
-      </main>
+                          <Stack spacing={1}>
+                            <Button
+                              component={Link}
+                              to={`/admin/course/${course.id}/builder`}
+                              variant="contained"
+                              color="primary"
+                              size="medium"
+                              disableElevation
+                              fullWidth
+                              sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+                            >
+                              Editar Conteúdo
+                            </Button>
+                            <Stack direction="row" spacing={1}>
+                              <Button
+                                onClick={() => handleEditCourse(course)}
+                                variant="outlined"
+                                color="inherit"
+                                size="small"
+                                fullWidth
+                                sx={{ borderRadius: 2, textTransform: 'none', borderColor: 'divider' }}
+                              >
+                                Config
+                              </Button>
+                              <Button
+                                onClick={() => handleDeleteCourse(course.id)}
+                                variant="outlined"
+                                color="error"
+                                size="small"
+                                fullWidth
+                                sx={{
+                                  borderRadius: 2,
+                                  textTransform: 'none',
+                                  bgcolor: '#fff5f5',
+                                  borderColor: '#feb2b2',
+                                  color: '#e53e3e',
+                                  '&:hover': {
+                                    bgcolor: '#fff5f5',
+                                    borderColor: '#e53e3e'
+                                  }
+                                }}
+                              >
+                                Excluir
+                              </Button>
+                            </Stack>
+                          </Stack>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              )}
+            </Box>
+          )}
+
+          {/* Render New PostsManager Tab */}
+          {activeTab === 'posts' && <PostsManager />}
+
+          {activeTab === 'site' && <SiteManager />}
+        </Container>
+      </Box>
 
       {modalOpen && (
         <CourseModal
@@ -264,413 +379,6 @@ export const AdminDashboard: React.FC = () => {
           course={editingCourse}
         />
       )}
-
-      <style>{`
-        .admin-dashboard {
-          min-height: 100vh;
-          background-color: #f8fafc;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .dashboard-header {
-          background: white;
-          border-bottom: 1px solid #e2e8f0;
-          position: sticky;
-          top: 0;
-          z-index: 100;
-        }
-
-        .header-container {
-          max-width: 1280px;
-          margin: 0 auto;
-          padding: 0 1.5rem;
-          min-height: 4rem;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          flex-wrap: wrap;
-          gap: 1rem;
-        }
-
-        @media (max-width: 640px) {
-          .header-container {
-            padding: 0.75rem 1rem;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 0.5rem;
-            min-height: auto;
-          }
-        }
-
-        .header-left {
-          display: flex;
-          align-items: center;
-        }
-
-        .dashboard-logo {
-          height: 1.75rem;
-          width: auto;
-        }
-
-        .header-divider {
-          height: 1.5rem;
-          width: 1px;
-          background-color: #e2e8f0;
-          margin: 0 1rem;
-        }
-
-        .header-left h1 {
-          font-size: 1.125rem;
-          font-weight: 700;
-          color: #1f2937;
-        }
-
-        @media (max-width: 640px) {
-          .header-divider { display: none; }
-          .header-left {
-            width: 100%;
-            justify-content: space-between;
-          }
-          .header-left h1 { 
-            font-size: 1rem;
-            text-align: right;
-            flex: 1;
-          }
-        }
-
-        .header-right {
-          display: flex;
-          align-items: center;
-          gap: 2rem;
-          font-size: 0.875rem;
-          color: #4b5563;
-        }
-
-        .header-actions-row {
-          display: flex;
-          align-items: center;
-          gap: 1.25rem;
-        }
-
-        @media (max-width: 640px) {
-          .header-right {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-            padding: 0.75rem 0 0;
-            margin-top: 0.25rem;
-          }
-          
-          .header-user-info {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: #64748b;
-            font-size: 0.75rem;
-          }
-          
-          .header-actions-row {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            background: #f8fafc;
-            padding: 0.5rem 0.75rem;
-            border-radius: 10px;
-            border: 1px solid #f1f5f9;
-          }
-
-          .link-dashboard {
-             flex: 1;
-             text-align: center;
-             justify-content: center;
-          }
-        }
-
-         .link-home {
-          color: #2563eb;
-          font-weight: 500;
-        }
-
-        .link-dashboard {
-          background-color: #eff6ff;
-          color: #2563eb;
-          padding: 0.4rem 0.8rem;
-          border-radius: 6px;
-          font-weight: 600;
-          transition: all 0.2s;
-          border: 1px solid #bfdbfe;
-          font-size: 0.8rem;
-          white-space: nowrap;
-        }
-
-        .link-dashboard:hover {
-          background-color: #dbeafe;
-          transform: translateY(-1px);
-        }
-
-        @media (max-width: 640px) {
-          .link-dashboard {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.75rem;
-          }
-        }
-
-        .btn-logout {
-          color: #6b7280;
-          font-weight: 500;
-          background: none;
-        }
-        .btn-logout:hover { color: #dc2626; }
-
-        /* Tabs */
-        .tabs-container {
-          background: white;
-          border-bottom: 1px solid #e2e8f0;
-          box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-          overflow-x: auto;
-          scrollbar-width: none; /* Hide scrollbar for cleaner look */
-        }
-        .tabs-container::-webkit-scrollbar { display: none; }
-
-        .tabs-header {
-          max-width: 1280px;
-          margin: 0 auto;
-          display: flex;
-          justify-content: space-around;
-        }
-
-        @media (max-width: 640px) {
-          .tabs-header {
-            padding: 0 1rem;
-            gap: 0.5rem;
-            justify-content: flex-start;
-            min-width: max-content;
-          }
-          .tab-button {
-            padding: 1rem 0.75rem;
-            font-size: 0.8rem;
-          }
-        }
-
-        .tab-button {
-          padding: 1rem 0.5rem;
-          font-size: 0.875rem;
-          font-weight: 500;
-          color: #6b7280;
-          background: none;
-          border-bottom: 2px solid transparent;
-          transition: all 0.2s;
-          white-space: nowrap;
-          flex: 1;
-          text-align: center;
-        }
-
-        @media (max-width: 480px) {
-          .tab-button {
-            padding: 0.75rem 0.25rem;
-            font-size: 0.75rem;
-          }
-        }
-
-        .tab-button:hover {
-          color: #374151;
-          border-bottom-color: #d1d5db;
-        }
-
-        .tab-button.active {
-          color: #2563eb;
-          border-bottom-color: #2563eb;
-        }
-
-        /* Content */
-        .dashboard-content {
-          flex: 1;
-          max-width: 1280px;
-          width: 100%;
-          margin: 0 auto;
-          padding: 2rem 1.5rem;
-        }
-
-        .section-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 2rem;
-          gap: 1rem;
-        }
-
-        @media (max-width: 640px) {
-          .section-header {
-            flex-direction: column;
-            align-items: flex-start;
-          }
-          .section-header .btn-primary {
-            width: 100%;
-          }
-        }
-
-        .section-header h2 {
-          font-size: 1.5rem;
-          font-weight: 700;
-          color: #111827;
-        }
-
-        .section-header p {
-          color: #6b7280;
-          font-size: 0.875rem;
-          margin-top: 0.25rem;
-        }
-
-        .btn-primary {
-          background-color: #2563eb;
-          color: white;
-          padding: 0.5rem 1rem;
-          border-radius: 0.375rem;
-          font-weight: 500;
-          font-size: 0.875rem;
-          box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        }
-        .btn-primary:hover { background-color: #1d4ed8; }
-
-        /* Grid */
-        .courses-grid {
-          display: grid;
-          grid-template-columns: repeat(1, 1fr);
-          gap: 1.5rem;
-        }
-        @media (min-width: 640px) { .courses-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (min-width: 1024px) { .courses-grid { grid-template-columns: repeat(3, 1fr); } }
-
-        .course-card {
-          background: white;
-          border-radius: 0.5rem;
-          border: 1px solid #f3f4f6;
-          overflow: hidden;
-          box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-          transition: box-shadow 0.2s;
-        }
-        .course-card:hover { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-
-        .course-banner { height: 8rem; width: 100%; }
-        .course-info { padding: 1.25rem; }
-
-        .course-header-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          margin-bottom: 0.25rem;
-        }
-
-        .course-header-row h3 {
-          font-size: 1.125rem;
-          font-weight: 500;
-          color: #111827;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .status-badge {
-          font-size: 0.75rem;
-          font-weight: 500;
-          padding: 0.125rem 0.625rem;
-          border-radius: 9999px;
-        }
-        .status-badge.published { background-color: #dcfce7; color: #166534; }
-        .status-badge.draft { background-color: #fef9c3; color: #854d0e; }
-
-        .instructor { color: #6b7280; font-size: 0.875rem; margin-bottom: 1.5rem; }
-
-        @media (max-width: 480px) {
-          .course-banner {
-            height: 6rem;
-          }
-          .course-actions {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr;
-            gap: 0.4rem;
-          }
-          .btn-action {
-            padding: 0.5rem 0.25rem;
-            font-size: 0.7rem;
-          }
-        }
-
-        .btn-action {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          padding: 0.5rem;
-          font-size: 0.8rem;
-          font-weight: 600;
-          border-radius: 0.375rem;
-          transition: all 0.2s;
-          white-space: nowrap;
-        }
-
-        .btn-action.primary {
-          flex: 1;
-          background-color: #2563eb;
-          color: white;
-        }
-        .btn-action.primary:hover { background-color: #1d4ed8; }
-
-        .btn-action.secondary {
-          background-color: white;
-          color: #374151;
-          border: 1px solid #d1d5db;
-        }
-        .btn-action.secondary:hover { background-color: #f9fafb; }
-
-        .btn-action.danger {
-          background-color: #fee2e2;
-          color: #b91c1c;
-        }
-        .btn-action.danger:hover { background-color: #fecaca; }
-
-        .empty-courses {
-          text-align: center;
-          padding: 3rem;
-          background: white;
-          border: 1px dashed #e5e7eb;
-          border-radius: 0.5rem;
-        }
-        
-        .mt-4 { margin-top: 1rem; }
-
-        /* Loading Spinner */
-        .admin-loading {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          height: 100vh;
-          background-color: #f8fafc;
-          flex-direction: column;
-          text-align: center;
-        }
-
-        .admin-loading .spinner {
-          border: 4px solid rgba(0, 0, 0, 0.1);
-          border-left-color: #2563eb;
-          border-radius: 50%;
-          width: 3rem;
-          height: 3rem;
-          animation: spin 1s linear infinite;
-          margin-bottom: 1rem;
-        }
-
-        .admin-loading p {
-          color: #4b5563;
-        }
-
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
-    </div>
+    </Box>
   );
 };

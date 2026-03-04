@@ -4,6 +4,10 @@ import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.tsx'
 
+import { ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import { ibreneTheme } from './theme';
+
 try {
   const root = document.getElementById('root');
   if (!root) {
@@ -14,9 +18,12 @@ try {
   // Removed debug log
   createRoot(root).render(
     <StrictMode>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+      <ThemeProvider theme={ibreneTheme}>
+        <CssBaseline />
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </ThemeProvider>
     </StrictMode>,
   );
   // Removed debug log
