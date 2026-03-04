@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import defaultHero from '../../assets/hero.png';
 import {
     DndContext,
     closestCenter,
@@ -321,8 +320,9 @@ export const SiteManager: React.FC = () => {
                         <div
                             className="bg-preview-hero"
                             style={{
-                                backgroundImage: `url(${bgImage || defaultHero})`,
-                                backgroundPosition: bgPosition
+                                backgroundImage: bgImage ? `url(${bgImage})` : 'none',
+                                backgroundPosition: bgPosition,
+                                backgroundColor: !bgImage ? '#0f172a' : 'transparent'
                             }}
                         >
                             <div className="preview-overlay">
