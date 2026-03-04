@@ -211,7 +211,7 @@ export const Dashboard: React.FC = () => {
   return (
     <div className="dashboard-page">
       {/* Fixed Header with Logo and Logout */}
-      <div className="dashboard-top-header">
+      <div className="dashboard-top-header animate-intro">
         <div className="dashboard-top-container">
           <Link to="/" className="dashboard-logo">
             <img src={logo} alt="IBRENE Logo" />
@@ -231,7 +231,7 @@ export const Dashboard: React.FC = () => {
       </div>
 
       <div className="dashboard-container">
-        <header className="dashboard-header">
+        <header className="dashboard-header animate-intro">
           <div>
             <h1>Painel do Aluno</h1>
             <p className="welcome-text">Bem-vindo de volta, {userName}.</p>
@@ -250,7 +250,7 @@ export const Dashboard: React.FC = () => {
         </header>
 
         <section className="courses-section">
-          <div className="section-header">
+          <div className="section-header animate-intro-delay-1">
             <h2 className="section-title">Meus Cursos</h2>
 
             <div className="search-bar-container">
@@ -275,7 +275,7 @@ export const Dashboard: React.FC = () => {
               </p>
             </div>
           ) : (
-            <div className="courses-grid">
+            <div className="courses-grid animate-intro-delay-2">
               {filteredCourses.map(course => (
                 <div key={course.id} className="course-card">
                   <div
