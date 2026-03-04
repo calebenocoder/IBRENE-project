@@ -29,9 +29,9 @@ export const Hero: React.FC = () => {
     <section className="hero">
       <div className="hero-overlay"></div>
       <div className="hero-content container text-center">
-        <h1 className="hero-title">{content.title}</h1>
-        <p className="hero-subtitle">{content.subtitle}</p>
-        <div className="hero-actions flex gap-sm" style={{ justifyContent: 'center', marginTop: '2rem' }}>
+        <h1 className="hero-title animate-intro">{content.title}</h1>
+        <p className="hero-subtitle animate-intro-delay-1">{content.subtitle}</p>
+        <div className="hero-actions flex gap-sm animate-intro-delay-2" style={{ justifyContent: 'center', marginTop: '2rem' }}>
           <a href="#visit" className="btn btn-primary">Planeje sua Visita</a>
           <a href="https://www.youtube.com/@ibrene-igrejabatistaregula6171" target="_blank" rel="noopener noreferrer" className="btn btn-outline">Assista Online</a>
         </div>
