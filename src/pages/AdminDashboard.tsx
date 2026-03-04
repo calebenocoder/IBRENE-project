@@ -342,9 +342,15 @@ export const AdminDashboard: React.FC = () => {
         .header-right {
           display: flex;
           align-items: center;
-          gap: 1.5rem;
+          gap: 2rem;
           font-size: 0.875rem;
           color: #4b5563;
+        }
+
+        .header-actions-row {
+          display: flex;
+          align-items: center;
+          gap: 1.25rem;
         }
 
         @media (max-width: 640px) {
