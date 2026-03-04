@@ -156,15 +156,19 @@ export const AdminDashboard: React.FC = () => {
             <h1>Painel Administrativo</h1>
           </div>
           <div className="header-right">
-            <span>Olá, <strong>{userName}</strong></span>
-            <Link to="/dashboard" className="link-dashboard">Painel Aluno</Link>
-            <Link to="/" className="link-home">Ver Site</Link>
-            <button
-              onClick={async () => { await supabase.auth.signOut(); navigate('/login'); }}
-              className="btn-logout"
-            >
-              Sair
-            </button>
+            <div className="header-user-info">
+              <span>Olá, <strong>{userName}</strong></span>
+            </div>
+            <div className="header-actions-row">
+              <Link to="/dashboard" className="link-dashboard">Painel Aluno</Link>
+              <Link to="/" className="link-home">Ver Site</Link>
+              <button
+                onClick={async () => { await supabase.auth.signOut(); navigate('/login'); }}
+                className="btn-logout"
+              >
+                Sair
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -292,9 +296,10 @@ export const AdminDashboard: React.FC = () => {
         @media (max-width: 640px) {
           .header-container {
             padding: 0.75rem 1rem;
-            flex-direction: row;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+            min-height: auto;
           }
         }
 
@@ -345,11 +350,36 @@ export const AdminDashboard: React.FC = () => {
         @media (max-width: 640px) {
           .header-right {
             width: 100%;
-            justify-content: space-between;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            padding: 0.75rem 0 0;
+            margin-top: 0.25rem;
+          }
+          
+          .header-user-info {
+            display: flex;
+            align-items: center;
             gap: 0.5rem;
-            padding: 0.75rem 0 0.25rem;
-            border-top: 1px solid #f1f5f9;
-            margin-top: -0.25rem;
+            color: #64748b;
+            font-size: 0.75rem;
+          }
+          
+          .header-actions-row {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: #f8fafc;
+            padding: 0.5rem 0.75rem;
+            border-radius: 10px;
+            border: 1px solid #f1f5f9;
+          }
+
+          .link-dashboard {
+             flex: 1;
+             text-align: center;
+             justify-content: center;
           }
         }
 
@@ -394,7 +424,10 @@ export const AdminDashboard: React.FC = () => {
           background: white;
           border-bottom: 1px solid #e2e8f0;
           box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+          overflow-x: auto;
+          scrollbar-width: none; /* Hide scrollbar for cleaner look */
         }
+        .tabs-container::-webkit-scrollbar { display: none; }
 
         .tabs-header {
           max-width: 1280px;
@@ -405,16 +438,14 @@ export const AdminDashboard: React.FC = () => {
 
         @media (max-width: 640px) {
           .tabs-header {
-            padding: 0 0.5rem;
-            gap: 0;
-            justify-content: space-between;
-          }
-        }
-
-        @media (max-width: 640px) {
-          .tabs-header {
-            gap: 1rem;
             padding: 0 1rem;
+            gap: 0.5rem;
+            justify-content: flex-start;
+            min-width: max-content;
+          }
+          .tab-button {
+            padding: 1rem 0.75rem;
+            font-size: 0.8rem;
           }
         }
 
@@ -547,19 +578,31 @@ export const AdminDashboard: React.FC = () => {
 
         .instructor { color: #6b7280; font-size: 0.875rem; margin-bottom: 1.5rem; }
 
-        .course-actions {
-          display: flex;
-          gap: 0.75rem;
+        @media (max-width: 480px) {
+          .course-banner {
+            height: 6rem;
+          }
+          .course-actions {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 0.4rem;
+          }
+          .btn-action {
+            padding: 0.5rem 0.25rem;
+            font-size: 0.7rem;
+          }
         }
 
         .btn-action {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          padding: 0.5rem 0.75rem;
-          font-size: 0.875rem;
-          font-weight: 500;
+          padding: 0.5rem;
+          font-size: 0.8rem;
+          font-weight: 600;
           border-radius: 0.375rem;
+          transition: all 0.2s;
+          white-space: nowrap;
         }
 
         .btn-action.primary {
