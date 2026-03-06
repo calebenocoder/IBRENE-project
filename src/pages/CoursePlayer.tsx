@@ -1,6 +1,17 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import {
+  CheckCircle as CheckCircleIcon,
+  RadioButtonUnchecked as UncheckedIcon,
+  PlayCircleOutline as VideoIcon,
+  MenuBook as TextIcon,
+  Quiz as QuizIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
+  Celebration as CelebrationIcon
+} from '@mui/icons-material';
+import { Button } from '@mui/material';
 const getEmbedUrl = (url: string) => {
   if (!url) return '';
   if (url.includes('watch?v=')) {
@@ -58,6 +69,7 @@ interface Course {
 
 export const CoursePlayer: React.FC = () => {
   const { courseId, lessonId } = useParams();
+  const [mobileModulesOpen, setMobileModulesOpen] = useState(true);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [course, setCourse] = useState<Course | null>(null);
@@ -231,6 +243,22 @@ export const CoursePlayer: React.FC = () => {
 
   const handleConfirmAnswer = () => {
     setCurrentQuestionAnswered(true);
+
+    // Scroll to the selected answer if not visible
+    const activeTest = activeLesson?.tests?.[0];
+    if (activeTest) {
+      const sortedQuestions = activeTest.questions.sort((a, b) => a.order_index - b.order_index);
+      const currentQuestion = sortedQuestions[currentQuestionIndex];
+      const selectedAltId = selectedAnswers[currentQuestion?.id];
+      if (selectedAltId) {
+        setTimeout(() => {
+          const el = document.querySelector(`[data-alt-id="${selectedAltId}"]`);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
+      }
+    }
   };
 
   const handleNextQuestion = () => {
@@ -396,6 +424,18 @@ export const CoursePlayer: React.FC = () => {
 
   const totalProgress = calculateTotalProgress();
 
+  // Find current module info for the sticky mobile bar (must be before early returns)
+  const currentModuleInfo = useMemo(() => {
+    if (!course || !activeLesson) return null;
+    for (let i = 0; i < course.modules.length; i++) {
+      const mod = course.modules[i];
+      if (mod.lessons.some(l => l.id === activeLesson.id)) {
+        return { index: i + 1, title: mod.title };
+      }
+    }
+    return null;
+  }, [course, activeLesson]);
+
   if (loading) return (
     <div className="classroom-loading">
       <div className="loading-content">
@@ -448,23 +488,55 @@ export const CoursePlayer: React.FC = () => {
 
   return (
     <div className="course-player-layout">
+      {/* Mobile sticky top bar */}
+      {activeLesson && currentModuleInfo && (
+        <div className="mobile-sticky-bar">
+          <span className="mobile-bar-module">Módulo {currentModuleInfo.index}</span>
+          <span className="mobile-bar-separator">·</span>
+          <span className="mobile-bar-lesson">{activeLesson.title}</span>
+        </div>
+      )}
+
       {/* Sidebar */}
       <aside className="course-sidebar">
         <div className="sidebar-header">
           <Link to="/dashboard" className="btn-back">← Voltar ao Início</Link>
           <h2 className="course-title">{course.title}</h2>
           {totalProgress === 100 && (
-            <button
+            <Button
+              variant="contained"
+              color="success"
+              fullWidth
+              startIcon={<CelebrationIcon />}
               onClick={handleFinishCourse}
-              className="btn-finish-course"
+              sx={{
+                mt: 1.5,
+                backgroundColor: '#10b981',
+                '&:hover': { backgroundColor: '#059669' },
+                textTransform: 'none',
+                fontWeight: 600,
+                borderRadius: '8px'
+              }}
               title="Clique para concluir o curso e gerar seu certificado"
             >
-              🎉 Concluir Curso
-            </button>
+              Concluir Curso
+            </Button>
           )}
         </div>
 
-        <div className="modules-list">
+        {/* Mobile toggle button for modules */}
+        <button
+          className="mobile-modules-toggle"
+          onClick={() => setMobileModulesOpen(!mobileModulesOpen)}
+        >
+          {mobileModulesOpen ? (
+            <><ExpandLessIcon sx={{ fontSize: 18, verticalAlign: 'middle', mr: 0.5 }} /> Ocultar Módulos</>
+          ) : (
+            <><ExpandMoreIcon sx={{ fontSize: 18, verticalAlign: 'middle', mr: 0.5 }} /> Ver Módulos</>
+          )}
+        </button>
+
+        <div className={`modules-list ${mobileModulesOpen ? 'mobile-open' : ''}`}>
           {course.modules.length === 0 && (
             <p className="empty-modules-message">Aguardando aulas serem cadastradas...</p>
           )}
@@ -487,17 +559,22 @@ export const CoursePlayer: React.FC = () => {
                         setCurrentQuestionAnswered(false);
                         setIsQuizCompleted(false);
                         setCurrentQuestionIndex(0);
+                        setMobileModulesOpen(false);
                       }}
                     >
-                      <input
-                        type="checkbox"
-                        className="lesson-checkbox"
-                        checked={lessonProgress[lesson.id]?.completed || false}
-                        readOnly
-                        onClick={(e) => e.preventDefault()}
-                      />
+                      {lessonProgress[lesson.id]?.completed ? (
+                        <CheckCircleIcon sx={{ fontSize: 20, color: '#3b82f6', flexShrink: 0 }} />
+                      ) : (
+                        <UncheckedIcon sx={{ fontSize: 20, color: '#cbd5e1', flexShrink: 0 }} />
+                      )}
                       <span className="lesson-icon">
-                        {lesson.content_type === 'video' ? '🎥' : lesson.content_type === 'quiz' ? '✏️' : '📖'}
+                        {lesson.content_type === 'video' ? (
+                          <VideoIcon sx={{ fontSize: 20, color: activeLesson?.id === lesson.id ? '#3b82f6' : '#64748b' }} />
+                        ) : lesson.content_type === 'quiz' ? (
+                          <QuizIcon sx={{ fontSize: 20, color: activeLesson?.id === lesson.id ? '#3b82f6' : '#64748b' }} />
+                        ) : (
+                          <TextIcon sx={{ fontSize: 20, color: activeLesson?.id === lesson.id ? '#3b82f6' : '#64748b' }} />
+                        )}
                       </span>
                       <span className="lesson-title">{lesson.title}</span>
                     </Link>
@@ -589,6 +666,7 @@ export const CoursePlayer: React.FC = () => {
                               <div
                                 key={alt.id}
                                 className={className}
+                                data-alt-id={alt.id}
                                 onClick={() => handleAnswerSelect(currentQuestion.id, alt.id)}
                               >
                                 <div className="alternative-letter">{getAlternativeLetter(altIndex)}</div>
@@ -839,18 +917,13 @@ export const CoursePlayer: React.FC = () => {
           color: #94a3b8;
         }
 
-        .lesson-checkbox {
-          width: 18px;
-          height: 18px;
-          cursor: default;
-          pointer-events: none;
-          accent-color: #3b82f6;
-        }
-
         .lesson-icon {
-          font-size: 1.2rem;
+          display: flex;
+          align-items: center;
           flex-shrink: 0;
         }
+
+
 
         .lesson-title {
           flex: 1;
@@ -1432,14 +1505,144 @@ export const CoursePlayer: React.FC = () => {
           to { transform: rotate(360deg); }
         }
 
+        /* Mobile sticky bar - hidden on desktop */
+        .mobile-sticky-bar {
+          display: none;
+        }
+
+        /* Mobile toggle button - hidden on desktop */
+        .mobile-modules-toggle {
+          display: none;
+        }
+
         @media (max-width: 768px) {
           .course-player-layout {
             flex-direction: column;
+            position: static;
+            height: auto;
+            min-height: 100vh;
+            overflow: visible;
           }
+
+          /* Sticky mobile top bar */
+          .mobile-sticky-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: white;
+            padding: 12px 16px;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            font-size: 0.85rem;
+          }
+
+          .mobile-bar-module {
+            font-weight: 700;
+            color: #3b82f6;
+            white-space: nowrap;
+          }
+
+          .mobile-bar-separator {
+            color: #cbd5e1;
+          }
+
+          .mobile-bar-lesson {
+            color: #334155;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+
           .course-sidebar {
             width: 100%;
             height: auto;
-            max-height: 300px;
+            max-height: none;
+            position: relative;
+            border-right: none;
+            border-bottom: 1px solid #e2e8f0;
+          }
+
+          .sidebar-header {
+            padding: 16px;
+          }
+
+          .course-title {
+            font-size: 1.1rem;
+          }
+
+          /* Show toggle button on mobile */
+          .mobile-modules-toggle {
+            display: block;
+            width: 100%;
+            padding: 10px 16px;
+            background: #f8fafc;
+            border: none;
+            border-top: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
+            color: #3b82f6;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            text-align: center;
+          }
+
+          .mobile-modules-toggle:hover {
+            background: #eff6ff;
+          }
+
+          /* Hide modules list on mobile by default, show when toggled */
+          .modules-list {
+            display: none;
+            max-height: none;
+            overflow: visible;
+          }
+
+          .modules-list.mobile-open {
+            display: block;
+            padding-bottom: 8px;
+          }
+
+          /* Main content scrolls naturally */
+          .lesson-content {
+            overflow: visible;
+            min-height: 0;
+          }
+
+          .lesson-view {
+            padding: 24px 16px;
+          }
+
+          .lesson-header h1 {
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+          }
+
+          .quiz-layout {
+            flex-direction: column;
+          }
+
+          .quiz-progress {
+            width: 100%;
+            position: relative;
+            top: 0;
+          }
+
+          .quiz-results {
+            padding: 24px;
+            margin: 20px auto;
+          }
+
+          .score-circle {
+            width: 120px;
+            height: 120px;
+          }
+
+          .score-percentage {
+            font-size: 2.5rem;
           }
         }
       `}</style>

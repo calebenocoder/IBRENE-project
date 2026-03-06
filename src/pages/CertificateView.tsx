@@ -24,13 +24,6 @@ export const CertificateView: React.FC = () => {
       try {
         if (!id) return;
 
-        // Fetch certificate with related user and course data
-        // Note: We need to join with courses, but user data might need a separate fetch 
-        // if we can't join auth.users easily.
-        // Actually, we can get the user's metadata from the current session if it's their certificate,
-        // or we rely on the fact that we stored user_id.
-        // For simplicity, we'll fetch the certificate and then the course info.
-
         const { data: cert, error: certError } = await supabase
           .from('certificates')
           .select(`
@@ -45,17 +38,11 @@ export const CertificateView: React.FC = () => {
 
         if (certError) throw certError;
 
-        // Fetch user details (assuming viewing own certificate for now)
         const { data: { user } } = await supabase.auth.getUser();
 
-        if (!user || user.id !== cert.user_id) {
-          // If viewing someone else's certificate, we might need a public profile table.
-          // For now, assume it's the logged in user or we just show "Estudante" if mismatched
-          // (In a real app, you'd have a public profiles table)
-          if (!user) {
-            setError('Você precisa estar logado para visualizar este certificado.');
-            return;
-          }
+        if (!user) {
+          setError('Você precisa estar logado para visualizar este certificado.');
+          return;
         }
 
         setCertificate({
@@ -91,179 +78,234 @@ export const CertificateView: React.FC = () => {
   if (!certificate) return null;
 
   return (
-    <div className="certificate-page">
-      <div className="no-print header-actions">
-        <button onClick={() => navigate('/dashboard')} className="btn-back">
-          &larr; Voltar ao Painel
+    <div className="cert-page">
+      {/* Buttons — hidden when printing */}
+      <div className="cert-actions no-print">
+        <button onClick={() => navigate('/dashboard')} className="btn-back-cert">
+          ← Voltar ao Painel
         </button>
-        <button onClick={handlePrint} className="btn-print">
+        <button onClick={handlePrint} className="btn-print-cert">
           🖨️ Imprimir / Salvar PDF
         </button>
       </div>
 
-      <div className="certificate-container">
-        <div className="certificate-content">
-          <div className="certificate-body">
-            <div className="cert-header">
-              <img src={logo} alt="IBRENE" className="cert-logo" />
-              <h1>Certificado de Conclusão</h1>
-            </div>
-
-            <p className="cert-text">Certificamos que</p>
-
-            <h2 className="student-name">{certificate.user_full_name}</h2>
-
-            <p className="cert-text">concluiu com êxito o curso de</p>
-
-            <h2 className="course-name">{certificate.course_title}</h2>
-
-            <div className="cert-footer">
-              <div className="cert-signature">
-                <div className="line"></div>
-                <p>{certificate.course_instructor}</p>
-                <small>Instrutor</small>
-              </div>
-
-              <div className="cert-date">
-                <p>{certificate.issued_at}</p>
-                <small>Data de Emissão</small>
-              </div>
-            </div>
-
+      {/* The actual certificate — exactly A4 landscape */}
+      <div className="cert-box" id="cert-box">
+        <div className="cert-inner">
+          <div className="cert-header-block">
+            <img src={logo} alt="IBRENE" className="cert-logo" />
+            <h1 className="cert-title">Certificado de Conclusão</h1>
           </div>
-          <div className="cert-code">
-            Código de verificação: {certificate.certificate_code}
+
+          <p className="cert-label">Certificamos que</p>
+          <h2 className="cert-name">{certificate.user_full_name}</h2>
+          <p className="cert-label">concluiu com êxito o curso de</p>
+          <h3 className="cert-course">{certificate.course_title}</h3>
+
+          <div className="cert-footer-row">
+            <div className="cert-sig">
+              <div className="cert-sig-line" />
+              <p>{certificate.course_instructor}</p>
+              <small>Instrutor</small>
+            </div>
+            <div className="cert-date-block">
+              <p>{certificate.issued_at}</p>
+              <small>Data de Emissão</small>
+            </div>
           </div>
+        </div>
+
+        <div className="cert-code-vertical">
+          Código de verificação: {certificate.certificate_code}
         </div>
       </div>
 
+      {/* Import Google Fonts */}
+      <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet" />
+
       <style>{`
-        .certificate-page {
-          min-height: 100vh;
+        /* ─── Screen styles ──────────────────────────────────────── */
+        .cert-page {
           background: #f0f2f5;
           display: flex;
           flex-direction: column;
           align-items: center;
           padding: 2rem;
+          /* no min-height: 100vh — so print isn't forced taller */
         }
 
-        .header-actions {
-          margin-bottom: 2rem;
+        .cert-actions {
           display: flex;
           gap: 1rem;
+          margin-bottom: 2rem;
         }
 
-        .btn-back, .btn-print {
+        .btn-back-cert, .btn-print-cert {
           padding: 0.75rem 1.5rem;
           border-radius: 8px;
           border: none;
           font-weight: 600;
           cursor: pointer;
-          transition: all 0.2s;
         }
 
-        .btn-back {
+        .btn-back-cert {
           background: white;
           color: #333;
           border: 1px solid #ddd;
         }
 
-        .btn-print {
+        .btn-print-cert {
           background: #3b82f6;
           color: white;
         }
 
-        .certificate-container {
+        /* A4 landscape certificate box */
+        .cert-box {
           background: white;
-          width: 297mm; /* A4 Landscape */
+          width: 297mm;
           height: 210mm;
-          padding: 0;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.1);
           position: relative;
           overflow: hidden;
           display: flex;
           align-items: center;
           justify-content: center;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+          box-sizing: border-box;
         }
 
-        /* This will be replaced by the user's image */
-        .certificate-content {
-          position: relative;
-          z-index: 2;
-          width: 80%;
+        .cert-inner {
+          width: 82%;
           text-align: center;
           color: #1a365d;
-        }
-
-        .cert-logo {
-          height: 80px;
-          margin-bottom: 1rem;
-        }
-
-        .cert-header {
           display: flex;
           flex-direction: column;
           align-items: center;
-          margin-bottom: 2rem;
         }
 
-        .cert-header h1 {
-          font-family: 'Playfair Display', serif; /* Need to import this or fallback */
-          font-size: 3rem;
-          margin: 0;
+        .cert-header-block {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          margin-bottom: 1rem;
+        }
+
+        .cert-logo {
+          height: 60px;
+          margin-bottom: 0.6rem;
+        }
+
+        .cert-title {
+          font-family: 'Playfair Display', serif;
+          font-size: 2rem;
           text-transform: uppercase;
           letter-spacing: 2px;
+          margin: 0;
         }
 
-        .cert-text {
-          font-size: 1.25rem;
-          margin: 1rem 0;
+        .cert-label {
+          font-size: 1rem;
           font-style: italic;
+          margin: 0.4rem 0;
+          color: #334155;
         }
 
-        .student-name {
-          font-family: 'Great Vibes', cursive; /* Fancy font */
-          font-size: 4rem;
-          margin: 1rem 0 2rem;
+        .cert-name {
+          font-family: 'Great Vibes', cursive;
+          font-size: 3rem;
           color: #2563eb;
-          border-bottom: 2px solid #e5e7eb;
-          display: inline-block;
+          border-bottom: 1.5px solid #e2e8f0;
           padding: 0 2rem;
+          margin: 0.4rem 0 0.8rem;
         }
 
-        .course-name {
-          font-size: 2.5rem;
-          margin: 1rem 0 3rem;
+        .cert-course {
+          font-size: 1.5rem;
           font-weight: 700;
+          color: #1a365d;
+          margin: 0.4rem 0 1.2rem;
         }
 
-        .cert-footer {
+        .cert-footer-row {
           display: flex;
           justify-content: space-around;
-          margin-top: 4rem;
+          width: 100%;
+          margin-top: 0.5rem;
         }
 
-        .cert-signature, .cert-date {
+        .cert-sig, .cert-date-block {
           text-align: center;
+          font-size: 0.9rem;
+          color: #334155;
         }
 
-        .cert-signature .line {
-          width: 200px;
+        .cert-sig-line {
+          width: 160px;
           height: 1px;
           background: #1a365d;
-          margin: 0 auto 0.5rem;
+          margin: 0 auto 0.4rem;
         }
 
-        .cert-code {
+        .cert-sig small, .cert-date-block small {
+          font-size: 0.75rem;
+          color: #64748b;
+          display: block;
+          margin-top: 2px;
+        }
+
+        .cert-code-vertical {
           position: absolute;
           top: 50%;
-          right: 20px;
-          transform: translateY(-50%) rotate(-90deg);
-          transform-origin: center right;
-          font-size: 0.75rem;
-          color: #9ca3af;
+          right: 14px;
+          transform: translateY(-50%) rotate(90deg);
+          transform-origin: center;
+          font-size: 0.6rem;
+          color: #94a3b8;
           font-family: monospace;
           white-space: nowrap;
+        }
+
+        /* Mobile scaling */
+        @media (max-width: 900px) {
+          .cert-page { padding: 1rem; }
+          .cert-actions { flex-direction: column; align-items: stretch; }
+          .cert-box {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 297 / 210;
+          }
+          .cert-title { font-size: 1.2rem; }
+          .cert-name { font-size: 1.8rem; }
+          .cert-course { font-size: 1rem; }
+          .cert-label { font-size: 0.75rem; }
+          .cert-logo { height: 35px; }
+          .cert-footer-row { font-size: 0.7rem; }
+          .cert-sig-line { width: 100px; }
+        }
+
+        /* ─── Print styles ───────────────────────────────────────── */
+        @media print {
+          @page {
+            size: 297mm 210mm;
+            margin: 0;
+          }
+
+          /* Hide everything outside the cert-box */
+          .no-print { display: none !important; }
+
+          /* Strip the page wrapper — let cert-box stand alone */
+          .cert-page {
+            padding: 0 !important;
+            background: white !important;
+            display: block !important;
+          }
+
+          /* cert-box is already 297mm × 210mm — just remove screen decoration */
+          .cert-box {
+            box-shadow: none !important;
+            margin: 0 !important;
+            page-break-inside: avoid !important;
+            page-break-after: avoid !important;
+          }
         }
 
         .loading, .error {
@@ -273,57 +315,8 @@ export const CertificateView: React.FC = () => {
           height: 100vh;
           font-size: 1.25rem;
         }
-
         .error { color: red; }
-
-        @media print {
-          body {
-            background: white;
-            height: auto;
-          }
-          
-          /* Hide non-certificate content */
-          .no-print { 
-            display: none !important; 
-          }
-
-          /* Position the certificate page */
-          .certificate-page {
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            z-index: 99999 !important;
-            background: white !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            visibility: visible !important;
-          }
-
-          .certificate-page * {
-            visibility: visible !important;
-          }
-
-          .certificate-container {
-             box-shadow: none !important;
-             margin: 0 !important;
-             width: 297mm !important;
-             height: 210mm !important;
-           }
-
-          @page {
-            size: landscape;
-            margin: 0;
-          }
-        }
       `}</style>
-
-      {/* Import Google Fonts for Certificate */}
-      <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet" />
     </div>
   );
 };
