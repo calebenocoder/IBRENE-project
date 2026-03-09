@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import logo from '../assets/logo.png';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 interface CertificateData {
   id: string;
@@ -20,6 +22,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({ certificateI
   const [certificate, setCertificate] = useState<CertificateData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     const fetchCertificate = async () => {
@@ -73,8 +76,44 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({ certificateI
     fetchCertificate();
   }, [certificateId]);
 
-  const handlePrint = () => {
-    window.print();
+  // Automatically trigger download once loaded
+  useEffect(() => {
+    if (certificate && !loading && !isGenerating) {
+      handleDownload();
+    }
+  }, [certificate, loading]);
+
+  const handleDownload = async () => {
+    const element = document.getElementById('modal-cert-box');
+    if (!element || !certificate) return;
+
+    try {
+      setIsGenerating(true);
+
+      // Create high-res canvas
+      const canvas = await html2canvas(element, {
+        scale: 3,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      pdf.addImage(imgData, 'PNG', 0, 0, 297, 210);
+      pdf.save(`Certificado_${certificate.user_full_name.replace(/\s+/g, '_')}_${certificate.course_title.replace(/\s+/g, '_')}.pdf`);
+    } catch (err) {
+      console.error('Error generating PDF:', err);
+      alert('Erro ao gerar PDF. Tente novamente.');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   if (!certificateId) return null;
@@ -91,12 +130,16 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({ certificateI
         ) : certificate ? (
           <>
             <div className="no-print modal-actions">
-              <button onClick={handlePrint} className="btn-print">
-                🖨️ Imprimir / Salvar PDF
+              <button
+                onClick={handleDownload}
+                className="btn-download-pdf"
+                disabled={isGenerating}
+              >
+                {isGenerating ? '⌛ Gerando PDF...' : '🖨️ Baixar Certificado (PDF)'}
               </button>
             </div>
 
-            <div className="certificate-container">
+            <div className="certificate-container" id="modal-cert-box">
               <div className="certificate-body">
                 <div className="cert-header">
                   <img src={logo} alt="IBRENE" className="cert-logo" />
@@ -178,15 +221,26 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({ certificateI
           justify-content: flex-end;
         }
 
-        .btn-print {
+        .btn-download-pdf {
           padding: 0.75rem 1.5rem;
           border-radius: 8px;
           border: none;
           font-weight: 600;
           cursor: pointer;
-          background: #3b82f6;
+          background: #10b981;
           color: white;
           box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+          transition: all 0.2s;
+        }
+
+        .btn-download-pdf:hover:not(:disabled) {
+          background: #059669;
+          transform: translateY(-1px);
+        }
+
+        .btn-download-pdf:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
         }
 
         /* Certificate Styles (Copied and Scoped) */
