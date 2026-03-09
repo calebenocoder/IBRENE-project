@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import logo from '../assets/logo.png';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 interface CertificateData {
   id: string;
@@ -18,6 +20,7 @@ export const CertificateView: React.FC = () => {
   const [certificate, setCertificate] = useState<CertificateData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     const fetchCertificate = async () => {
@@ -69,8 +72,38 @@ export const CertificateView: React.FC = () => {
     fetchCertificate();
   }, [id]);
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrint = async () => {
+    const element = document.getElementById('cert-box');
+    if (!element || !certificate) return;
+
+    try {
+      setIsGenerating(true);
+
+      // Create canvas with high scale for quality
+      const canvas = await html2canvas(element, {
+        scale: 3, // Higher scale for better print quality
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+
+      // A4 landscape dimensions in mm: 297 x 210
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      pdf.addImage(imgData, 'PNG', 0, 0, 297, 210);
+      pdf.save(`Certificado_${certificate.user_full_name.replace(/\s+/g, '_')}_${certificate.course_title.replace(/\s+/g, '_')}.pdf`);
+    } catch (err) {
+      console.error('Error generating PDF:', err);
+      alert('Erro ao gerar PDF. Tente novamente.');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   if (loading) return <div className="loading">Carregando certificado...</div>;
@@ -84,8 +117,12 @@ export const CertificateView: React.FC = () => {
         <button onClick={() => navigate('/dashboard')} className="btn-back-cert">
           ← Voltar ao Painel
         </button>
-        <button onClick={handlePrint} className="btn-print-cert">
-          🖨️ Imprimir / Salvar PDF
+        <button
+          onClick={handlePrint}
+          className="btn-print-cert"
+          disabled={isGenerating}
+        >
+          {isGenerating ? '⌛ Gerando...' : '🖨️ Baixar Certificado (PDF)'}
         </button>
       </div>
 
