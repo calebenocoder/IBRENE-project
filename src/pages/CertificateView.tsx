@@ -289,22 +289,38 @@ export const CertificateView: React.FC = () => {
             margin: 0;
           }
 
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            height: 210mm !important;
+          }
+
           /* Hide everything outside the cert-box */
           .no-print { display: none !important; }
 
-          /* Strip the page wrapper — let cert-box stand alone */
+          /* Strip the page wrapper — let cert-box stand alone and centered */
           .cert-page {
             padding: 0 !important;
+            margin: 0 !important;
             background: white !important;
-            display: block !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 297mm !important;
+            height: 210mm !important;
+            min-height: unset !important;
           }
 
-          /* cert-box is already 297mm × 210mm — just remove screen decoration */
+          /* Slightly smaller than A4 (approx 96%) to handle browser margins/defaults */
           .cert-box {
             box-shadow: none !important;
-            margin: 0 !important;
+            margin: auto !important;
+            width: 285mm !important;
+            height: 201mm !important;
             page-break-inside: avoid !important;
             page-break-after: avoid !important;
+            border: none !important;
           }
         }
 
