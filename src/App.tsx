@@ -25,7 +25,7 @@ function App() {
 
   const [heroImage, setHeroImage] = useState<string | null>(null);
   const [heroPosition, setHeroPosition] = useState<string>('center top');
-  const [loadingSettings, setLoadingSettings] = useState(isPublicPage);
+  const [loadingSettings, setLoadingSettings] = useState(true);
 
   useEffect(() => {
     if (isDashboard || isCoursePlayer || isAdmin) {
@@ -36,12 +36,6 @@ function App() {
   }, [isDashboard, isCoursePlayer, isAdmin]);
 
   useEffect(() => {
-    // If not a public page, we don't need to block for settings
-    if (!isPublicPage) {
-      setLoadingSettings(false);
-      return;
-    }
-
     const fetchSettings = async () => {
       try {
         const { data } = await supabase
@@ -51,8 +45,8 @@ function App() {
           .single();
 
         if (data) {
-          if (data.hero_bg_image) setHeroImage(data.hero_bg_image);
-          if (data.hero_bg_position) setHeroPosition(data.hero_bg_position);
+          setHeroImage(data.hero_bg_image || null);
+          setHeroPosition(data.hero_bg_position || 'center top');
         }
       } catch (error) {
         console.error('Failed to load site settings', error);
@@ -62,7 +56,7 @@ function App() {
     };
 
     fetchSettings();
-  }, [isPublicPage]); // Refetch if moving between public/private contexts, though usually full reload
+  }, []); // Run once on mount to get global site settings
 
   if (loadingSettings) {
     return null; // Or a minimal loading spinner to avoid FOUC
@@ -70,16 +64,15 @@ function App() {
 
   return (
     <>
-      {isPublicPage && (
-        <div
-          className="global-hero-background"
-          style={{
-            backgroundImage: heroImage ? `url(${heroImage})` : undefined,
-            backgroundPosition: heroPosition,
-            opacity: 1 // Ensure it's visible once loaded
-          }}
-        />
-      )}
+      <div
+        className="global-hero-background"
+        style={{
+          backgroundImage: heroImage ? `url(${heroImage})` : undefined,
+          backgroundPosition: heroPosition,
+          opacity: isPublicPage ? 1 : 0.4, // Dim background on dashboard/admin pages for readability
+          filter: isPublicPage ? 'none' : 'blur(5px)' // Add subtle blur on management pages
+        }}
+      />
       {!isDashboard && !isCoursePlayer && !location.pathname.includes('/admin/course/') && !isAdmin && !isCertificate && <Navbar />}
       <Routes>
         <Route path="/" element={<Home />} />

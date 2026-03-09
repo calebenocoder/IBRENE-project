@@ -56,10 +56,10 @@ body {
   position: relative;
 }
 
-/* Light Mode Overrides for Dashboard */
+/* Light Mode Overrides for Dashboard - Allow background image to show through */
 html.light-mode,
 body.light-mode {
-  background-color: var(--color-off-white) !important;
+  background-color: transparent !important;
 }
 
 /* 

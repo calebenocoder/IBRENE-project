@@ -189,7 +189,7 @@ export const Dashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'background.default' }}>
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'rgba(248, 250, 252, 0.8)' }}>
         <Stack alignItems="center" spacing={2}>
           <CircularProgress size={48} />
           <Typography variant="h6" color="text.secondary">
@@ -201,9 +201,9 @@ export const Dashboard: React.FC = () => {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: 'background.default' }}>
+    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: 'rgba(248, 250, 252, 0.8)' }}>
       {/* AppBar */}
-      <AppBar position="sticky" color="inherit" elevation={1} sx={{ bgcolor: 'background.paper' }}>
+      <AppBar position="sticky" color="inherit" elevation={1} sx={{ bgcolor: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(8px)' }}>
         <Container maxWidth="lg">
           <Toolbar disableGutters sx={{ justifyContent: 'space-between' }}>
             <Stack direction="row" alignItems="center" component={Link} to="/" sx={{ textDecoration: 'none' }}>

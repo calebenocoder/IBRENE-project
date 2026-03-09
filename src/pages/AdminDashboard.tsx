@@ -143,7 +143,7 @@ export const AdminDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'background.default' }}>
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'rgba(248, 250, 252, 0.8)' }}>
         <Stack alignItems="center" spacing={2}>
           <CircularProgress size={48} />
           <Typography variant="h6" color="text.secondary">
@@ -155,8 +155,8 @@ export const AdminDashboard: React.FC = () => {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: 'background.default' }}>
-      <AppBar position="sticky" color="inherit" elevation={1} className="animate-intro">
+    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: 'rgba(248, 250, 252, 0.8)' }}>
+      <AppBar position="sticky" color="inherit" elevation={1} className="animate-intro" sx={{ bgcolor: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(8px)' }}>
         <Container maxWidth="lg">
           <Toolbar disableGutters sx={{ py: { xs: 3, sm: 1 }, flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center', gap: { xs: 3, sm: 0 } }}>
             {/* Left Side */}
@@ -191,7 +191,7 @@ export const AdminDashboard: React.FC = () => {
         </Container>
       </AppBar>
 
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }} className="animate-intro-delay-1">
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(4px)' }} className="animate-intro-delay-1">
         <Container maxWidth="lg" disableGutters>
           <Tabs
             value={activeTab}
