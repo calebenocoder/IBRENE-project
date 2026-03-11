@@ -56,7 +56,7 @@ function App() {
     };
 
     fetchSettings();
-  }, []); // Run once on mount to get global site settings
+  }, [location.pathname]); // Re-fetch on navigation to ensure settings are fresh from Admin panel changes
 
   if (loadingSettings) {
     return null; // Or a minimal loading spinner to avoid FOUC

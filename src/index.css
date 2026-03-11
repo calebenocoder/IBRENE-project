@@ -40,15 +40,15 @@
   --header-height: 80px;
 }
 
-html {
-  background-color: var(--color-primary);
+html,
+body {
+  background: transparent !important;
   min-height: 100%;
   overscroll-behavior: none;
 }
 
 body {
   font-family: var(--font-family-sans);
-  background: transparent;
   color: var(--color-text-main);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -56,14 +56,9 @@ body {
   position: relative;
 }
 
-/* Light Mode Overrides for Dashboard - Allow background image to show through */
-html.light-mode,
-body.light-mode {
-  background-color: transparent !important;
-}
-
 /* 
    Fixed background moved to a dedicated element for conditional rendering.
+   This element now carries the base primary color.
 */
 .global-hero-background {
   position: fixed;
@@ -72,11 +67,12 @@ body.light-mode {
   width: 100%;
   height: 120vh;
   background-color: var(--color-primary);
+  /* Base color if no image */
   background-size: cover;
   background-position: center top;
   z-index: -1;
   pointer-events: none;
-  transition: background-position 0.5s ease-out, background-image 0.5s ease-out;
+  transition: opacity 0.5s ease-out, background-image 0.5s ease-out;
 }
 
 

@@ -55,7 +55,7 @@ export const Hero: React.FC = () => {
           left: 0;
           right: 0;
           bottom: 0;
-          background: linear-gradient(rgba(15, 23, 42, 0.4), rgba(15, 23, 42, 0.7));
+          background: linear-gradient(rgba(15, 23, 42, 0.2), rgba(15, 23, 42, 0.5));
           z-index: 1;
         }
 
@@ -63,6 +63,7 @@ export const Hero: React.FC = () => {
           position: relative;
           z-index: 2;
           max-width: 800px;
+          text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
 
         .hero-title {
