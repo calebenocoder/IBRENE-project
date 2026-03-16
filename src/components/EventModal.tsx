@@ -265,8 +265,6 @@ export const EventModal: React.FC<EventModalProps> = ({ event, onClose }) => {
                     font-weight: 800;
                     margin-bottom: 0.75rem;
                     letter-spacing: -0.02em;
-                    overflow-wrap: break-word;
-                    word-wrap: break-word;
                 }
 
                 .modal-subtitle {
@@ -275,30 +273,26 @@ export const EventModal: React.FC<EventModalProps> = ({ event, onClose }) => {
                     font-weight: 400;
                     font-style: italic;
                     margin-bottom: 0;
-                    overflow-wrap: break-word;
-                    word-wrap: break-word;
                 }
 
                 /* Rich Text Styles for News Layout */
                 .modal-body .rich-text {
                     font-size: 1.125rem;
-                    line-height: 1.6;
+                    line-height: 1.5;
                     color: #334155;
-                    overflow-wrap: break-word;
-                    word-wrap: break-word;
                 }
 
-                .modal-body p { margin-bottom: 1.5rem; }
-                .modal-body h2 { font-size: 1.75rem; font-weight: 700; color: #1e293b; margin: 2rem 0 1rem; }
-                .modal-body h3 { font-size: 1.5rem; font-weight: 600; color: #1e293b; margin: 1.5rem 0 1rem; }
-                .modal-body ul, .modal-body ol { margin-bottom: 1.5rem; padding-left: 1.5rem; }
-                .modal-body li { margin-bottom: 0.5rem; }
+                .modal-body p { margin-bottom: 0.75rem; }
+                .modal-body h2 { font-size: 1.75rem; font-weight: 700; color: #1e293b; margin: 1.5rem 0 0.75rem; }
+                .modal-body h3 { font-size: 1.5rem; font-weight: 600; color: #1e293b; margin: 1.25rem 0 0.75rem; }
+                .modal-body ul, .modal-body ol { margin-bottom: 0.75rem; padding-left: 1.5rem; }
+                .modal-body li { margin-bottom: 0.25rem; }
                 .modal-body blockquote {
                     border-left: 4px solid var(--color-accent, #2563eb);
                     padding-left: 1.5rem;
                     font-style: italic;
                     color: #475569;
-                    margin: 1.5rem 0;
+                    margin: 1rem 0;
                 }
                 .modal-body img {
                     border-radius: 0.75rem;
