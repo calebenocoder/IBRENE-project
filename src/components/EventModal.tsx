@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 interface EventModalProps {
     event: {
@@ -76,7 +77,7 @@ export const EventModal: React.FC<EventModalProps> = ({ event, onClose }) => {
         document.body.removeChild(textArea);
     };
 
-    return (
+    const modalContent = (
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-container" onClick={(e) => e.stopPropagation()}>
                 <button className="close-btn" onClick={onClose} aria-label="Close">
@@ -316,4 +317,6 @@ export const EventModal: React.FC<EventModalProps> = ({ event, onClose }) => {
             `}</style>
         </div>
     );
+
+    return createPortal(modalContent, document.body);
 };

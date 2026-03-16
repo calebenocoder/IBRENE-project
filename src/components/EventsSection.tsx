@@ -146,7 +146,18 @@ export const EventsSection: React.FC = () => {
                         <p className="no-events">Nenhum evento em destaque no momento.</p>
                     ) : (
                         events.map((event) => (
-                            <div key={event.id} className="event-card fade-in">
+                            <div 
+                                key={event.id} 
+                                className="event-card fade-in"
+                                onClick={() => handleSelectEvent(event)}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        handleSelectEvent(event);
+                                    }
+                                }}
+                            >
                                 <div
                                     className="card-bg"
                                     style={{ backgroundImage: `url(${event.image})` }}
@@ -162,13 +173,8 @@ export const EventsSection: React.FC = () => {
                                 <div className="card-content">
                                     <span className="category">{event.category}</span>
                                     <h3 className="event-title">{event.title}</h3>
-                                    <p className="event-desc">{event.description}</p>
-                                    <button
-                                        onClick={() => handleSelectEvent(event)}
-                                        className="btn-read-more"
-                                    >
-                                        Ler mais &gt;
-                                    </button>
+                                    {event.description && <p className="event-desc">{event.description}</p>}
+                                    <span className="read-more-text">Ler mais &gt;</span>
                                 </div>
                             </div>
                         ))
@@ -276,6 +282,7 @@ export const EventsSection: React.FC = () => {
                     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
                     transition: transform 0.3s ease, box-shadow 0.3s ease;
                     background: #000;
+                    cursor: pointer;
                 }
 
                 .event-card:hover {
@@ -293,7 +300,7 @@ export const EventsSection: React.FC = () => {
                 .card-overlay {
                     position: absolute;
                     inset: 0;
-                    background: linear-gradient(to top, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.6) 50%, rgba(15, 23, 42, 0.1) 100%);
+                    background: linear-gradient(to top, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.4) 35%, rgba(15, 23, 42, 0) 65%);
                 }
 
                 .date-badge {
@@ -340,7 +347,7 @@ export const EventsSection: React.FC = () => {
                     bottom: 0;
                     left: 0;
                     width: 100%;
-                    padding: 1.5rem;
+                    padding: 1.25rem;
                     color: white;
                     z-index: 10;
                 }
@@ -357,38 +364,32 @@ export const EventsSection: React.FC = () => {
                 }
 
                 .event-title {
-                    font-size: 1.5rem;
+                    font-size: 1.4rem;
                     font-weight: 700;
                     line-height: 1.2;
-                    margin-bottom: 0.5rem;
+                    margin-bottom: 0.25rem;
                 }
 
                 .event-desc {
-                    font-size: 0.875rem;
+                    font-size: 0.85rem;
                     opacity: 0.8;
-                    margin-bottom: 1.5rem;
+                    margin-bottom: 0.75rem;
                     display: -webkit-box;
                     -webkit-line-clamp: 2;
                     -webkit-box-orient: vertical;
                     overflow: hidden;
                 }
 
-                .btn-read-more {
-                    display: inline-block;
-                    padding: 0.5rem 1.25rem;
-                    border: 1px solid rgba(255, 255, 255, 0.3);
-                    border-radius: 9999px;
-                    color: white;
+                .read-more-text {
                     font-size: 0.8rem;
                     font-weight: 600;
-                    transition: all 0.2s;
-                    background: transparent;
-                    cursor: pointer;
+                    color: var(--color-accent-light, #60a5fa);
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
                 }
-
-                .btn-read-more:hover {
-                    background-color: var(--color-accent);
-                    border-color: var(--color-accent);
+                
+                .event-card:hover .read-more-text {
+                    text-decoration: underline;
                 }
 
                 /* --- Animations & Skeleton --- */
