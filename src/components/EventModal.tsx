@@ -119,7 +119,12 @@ export const EventModal: React.FC<EventModalProps> = ({ event, onClose }) => {
 
                     <div className="modal-body">
                         {event.content ? (
-                            <div className="rich-text" dangerouslySetInnerHTML={{ __html: event.content }} />
+                            <div className="rich-text" dangerouslySetInnerHTML={{ 
+                                __html: event.content
+                                    .replace(/&nbsp;/g, ' ')
+                                    .replace(/<p><br><\/p>/g, '')
+                                    .replace(/<br>/g, '') 
+                            }} />
                         ) : (
                             <p className="placeholder-text">Detalhes completos em breve.</p>
                         )}
@@ -280,9 +285,11 @@ export const EventModal: React.FC<EventModalProps> = ({ event, onClose }) => {
                     font-size: 1.125rem;
                     line-height: 1.5;
                     color: #334155;
+                    overflow-wrap: break-word;
+                    word-wrap: break-word;
                 }
 
-                .modal-body p { margin-bottom: 0.75rem; }
+                .modal-body p { margin-bottom: 0.5rem; }
                 .modal-body h2 { font-size: 1.75rem; font-weight: 700; color: #1e293b; margin: 1.5rem 0 0.75rem; }
                 .modal-body h3 { font-size: 1.5rem; font-weight: 600; color: #1e293b; margin: 1.25rem 0 0.75rem; }
                 .modal-body ul, .modal-body ol { margin-bottom: 0.75rem; padding-left: 1.5rem; }
