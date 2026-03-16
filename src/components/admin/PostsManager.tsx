@@ -1,7 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../lib/supabase';
-import ReactQuill from 'react-quill-new';
+import ReactQuill, { Quill } from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
+
+// Register custom format for buttons
+const Link = Quill.import('formats/link') as any;
+class ButtonLink extends Link {
+    static create(value: string) {
+        const node = super.create(value);
+        node.setAttribute('class', 'btn-link');
+        return node;
+    }
+    static formats(node: HTMLElement) {
+        return node.getAttribute('class') === 'btn-link' ? true : super.formats(node);
+    }
+}
+(ButtonLink as any).blotName = 'btn-link';
+(ButtonLink as any).tagName = 'a';
+Quill.register(ButtonLink);
 import {
     Box,
     Button,
@@ -274,6 +290,48 @@ export const PostsManager: React.FC = () => {
         setDeleteConfirmation({ isOpen: false, postId: null });
     };
 
+    const modules = useMemo(() => ({
+        toolbar: {
+            container: [
+                [{ 'header': [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+                [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                ['link', 'image'],
+                [{ 'color': [] }, { 'background': [] }],
+                ['clean'],
+                ['btn-link'] // Custom button
+            ],
+            handlers: {
+                'btn-link': function(this: any) {
+                    const range = this.quill.getSelection();
+                    if (range) {
+                        const value = prompt('Digite a URL do botão:');
+                        if (value) {
+                            this.quill.format('btn-link', value);
+                        }
+                    } else {
+                        alert('Selecione um texto para transformar em botão.');
+                    }
+                }
+            }
+        }
+    }), []);
+
+    // Formats for Quill
+    const formats = [
+        'header', 'bold', 'italic', 'underline', 'strike', 'blockquote',
+        'list', 'bullet', 'link', 'image', 'color', 'background', 'btn-link'
+    ];
+
+    useEffect(() => {
+        // Add custom icon for button link
+        const btnLinkIcon = document.querySelector('.ql-btn-link');
+        if (btnLinkIcon) {
+            btnLinkIcon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;"><rect x="3" y="5" width="18" height="14" rx="2" ry="2"></rect><path d="M7 11h10"></path></svg>';
+            (btnLinkIcon as HTMLElement).title = "Transformar em Botão";
+        }
+    }, [isCreating]);
+
     if (loading) {
         return (
             <Box sx={{ minHeight: '50vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -456,6 +514,8 @@ export const PostsManager: React.FC = () => {
                                 theme="snow"
                                 value={content}
                                 onChange={setContent}
+                                modules={modules}
+                                formats={formats}
                             />
                         </Box>
                     </Grid>

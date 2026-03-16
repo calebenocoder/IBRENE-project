@@ -289,6 +289,37 @@ export const EventModal: React.FC<EventModalProps> = ({ event, onClose }) => {
                     word-wrap: break-word;
                 }
 
+                .modal-body .rich-text a:not(.btn-link) {
+                    color: var(--color-accent, #3b82f6);
+                    text-decoration: underline;
+                    font-weight: 500;
+                }
+                
+                .modal-body .rich-text a:not(.btn-link):hover {
+                    color: var(--color-accent-light, #60a5fa);
+                    text-decoration: none;
+                }
+
+                .modal-body .rich-text a.btn-link {
+                    display: inline-block;
+                    padding: 0.75rem 1.75rem;
+                    background-color: var(--color-accent, #3b82f6);
+                    color: white;
+                    text-decoration: none;
+                    border-radius: 9999px;
+                    font-weight: 600;
+                    margin: 1rem 0;
+                    transition: all 0.2s;
+                    text-align: center;
+                }
+
+                .modal-body .rich-text a.btn-link:hover {
+                    background-color: #2563eb;
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.25);
+                    color: white;
+                }
+
                 .modal-body p { margin-bottom: 0.5rem; }
                 .modal-body h2 { font-size: 1.75rem; font-weight: 700; color: #1e293b; margin: 1.5rem 0 0.75rem; }
                 .modal-body h3 { font-size: 1.5rem; font-weight: 600; color: #1e293b; margin: 1.25rem 0 0.75rem; }
