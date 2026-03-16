@@ -10,6 +10,7 @@ interface Event {
     category?: string;
     date: { day: string; month: string; year: string };
     image: string;
+    banner?: string;
     link?: string;
     slug?: string;
     content?: string;
@@ -77,6 +78,7 @@ export const EventsSection: React.FC = () => {
                         category: post.category,
                         date: { day, month, year },
                         image: post.image_url || '/placeholder-image.jpg',
+                        banner: post.banner_image_url,
                         content: post.content,
                         link: '#',
                         slug: post.title.toLowerCase().replace(/ /g, '-')

@@ -34,6 +34,7 @@ interface Post {
     subtitle: string;
     content: string;
     image_url: string;
+    banner_image_url?: string;
     category: string;
     event_date: string;
     created_at: string;
@@ -53,8 +54,10 @@ export const PostsManager: React.FC = () => {
     const [date, setDate] = useState('');
     const [content, setContent] = useState('');
     const [imageUrl, setImageUrl] = useState('');
+    const [bannerUrl, setBannerUrl] = useState('');
     const [visible, setVisible] = useState(true);
     const [uploading, setUploading] = useState(false);
+    const [uploadingBanner, setUploadingBanner] = useState(false);
 
     useEffect(() => {
         fetchPosts();
@@ -83,6 +86,7 @@ export const PostsManager: React.FC = () => {
         setDate('');
         setContent('');
         setImageUrl('');
+        setBannerUrl('');
         setVisible(true);
         setEditingPost(null);
         setIsCreating(false);
@@ -97,6 +101,7 @@ export const PostsManager: React.FC = () => {
         setDate(formattedDate);
         setContent(post.content || '');
         setImageUrl(post.image_url || '');
+        setBannerUrl(post.banner_image_url || '');
         setVisible(post.visible !== false); // Default to true if null
         setEditingPost(post);
         setIsCreating(true);
@@ -159,6 +164,40 @@ export const PostsManager: React.FC = () => {
         }
     };
 
+    const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) {
+            return;
+        }
+
+        const file = e.target.files[0];
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `posts/banners/${fileName}`;
+
+        setUploadingBanner(true);
+
+        try {
+            const { error: uploadError } = await supabase.storage
+                .from('site-assets')
+                .upload(filePath, file);
+
+            if (uploadError) {
+                throw uploadError;
+            }
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('site-assets')
+                .getPublicUrl(filePath);
+
+            setBannerUrl(publicUrl);
+        } catch (error) {
+            console.error('Error uploading banner:', error);
+            alert('Erro ao fazer upload do banner.');
+        } finally {
+            setUploadingBanner(false);
+        }
+    };
+
     const handleSave = async () => {
         try {
             if (!title || !date) {
@@ -173,6 +212,7 @@ export const PostsManager: React.FC = () => {
                 event_date: new Date(date).toISOString(),
                 content,
                 image_url: imageUrl,
+                banner_image_url: bannerUrl || null,
                 visible
             };
 
@@ -347,6 +387,46 @@ export const PostsManager: React.FC = () => {
                                     onChange={handleImageUpload}
                                 />
                             </Button>
+                        </Stack>
+                    </Grid>
+
+                    <Grid size={{ xs: 12 }}>
+                        <Typography variant="subtitle2" gutterBottom color="text.secondary">
+                            Banner Interno (Opcional - Exibe ao abrir o post)
+                        </Typography>
+                        <Stack spacing={2} alignItems="flex-start">
+                            {bannerUrl && (
+                                <Box sx={{
+                                    width: '100%',
+                                    height: 150,
+                                    borderRadius: 1,
+                                    border: '1px dashed',
+                                    borderColor: 'divider',
+                                    overflow: 'hidden',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    bgcolor: 'grey.50'
+                                }}>
+                                    <img src={bannerUrl} alt="Banner" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                </Box>
+                            )}
+                            <Stack direction={{ xs: 'column', sm: 'row' }} alignItems="center" spacing={2} sx={{ width: '100%' }}>
+                                <Button
+                                    variant="outlined"
+                                    component="label"
+                                    startIcon={<UploadIcon />}
+                                    disabled={uploadingBanner}
+                                >
+                                    {uploadingBanner ? 'Enviando...' : 'Upload do Banner (Recomendado 1200x500)'}
+                                    <input
+                                        hidden
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleBannerUpload}
+                                    />
+                                </Button>
+                            </Stack>
                         </Stack>
                     </Grid>
 

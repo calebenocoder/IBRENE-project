@@ -9,6 +9,7 @@ interface EventModalProps {
         category?: string;
         date: { day: string; month: string; year: string };
         image: string;
+        banner?: string;
         content?: string; // Full HTML content
         slug?: string;
     };
@@ -87,7 +88,7 @@ export const EventModal: React.FC<EventModalProps> = ({ event, onClose }) => {
                     </svg>
                 </button>
 
-                <div className="modal-hero-image" style={{ backgroundImage: `url(${event.image})` }}>
+                <div className="modal-hero-image" style={{ backgroundImage: `url(${event.banner || event.image})` }}>
                     <div className="hero-gradient"></div>
                 </div>
 
@@ -264,6 +265,8 @@ export const EventModal: React.FC<EventModalProps> = ({ event, onClose }) => {
                     font-weight: 800;
                     margin-bottom: 0.75rem;
                     letter-spacing: -0.02em;
+                    overflow-wrap: break-word;
+                    word-wrap: break-word;
                 }
 
                 .modal-subtitle {
@@ -272,13 +275,17 @@ export const EventModal: React.FC<EventModalProps> = ({ event, onClose }) => {
                     font-weight: 400;
                     font-style: italic;
                     margin-bottom: 0;
+                    overflow-wrap: break-word;
+                    word-wrap: break-word;
                 }
 
                 /* Rich Text Styles for News Layout */
                 .modal-body .rich-text {
                     font-size: 1.125rem;
-                    line-height: 1.8;
+                    line-height: 1.6;
                     color: #334155;
+                    overflow-wrap: break-word;
+                    word-wrap: break-word;
                 }
 
                 .modal-body p { margin-bottom: 1.5rem; }
