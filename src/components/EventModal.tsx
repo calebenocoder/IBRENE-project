@@ -56,6 +56,10 @@ export const EventModal: React.FC<EventModalProps> = ({ event, onClose }) => {
         updateMeta('og:title', event.title, true);
         updateMeta('og:description', event.description || 'Confira este evento na IBRENE', true);
         updateMeta('og:image', event.banner || event.image, true);
+        updateMeta('og:url', window.location.href, true);
+        updateMeta('twitter:title', event.title);
+        updateMeta('twitter:description', event.description || 'Confira este evento na IBRENE');
+        updateMeta('twitter:image', event.banner || event.image);
         updateMeta('description', event.description || 'Confira este evento na IBRENE');
 
         return () => {
