@@ -34,12 +34,14 @@ jobs:
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }} # Update this secret in GitHub!
-          password: ${{ secrets.FTP_PASSWORD }} # Update this secret in GitHub!
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./dist/
-          # Because your new user starts inside public_html, 
-          # we now deploy to the current root of that user.
-          server-dir: ./ 
+          server-dir: ./
+          # Increase timeout to 90 seconds to prevent control socket drops
+          timeout: 90000
+          # Standard FTP/FTPS protocol (Change to 'ftps' if your server requires it)
+          protocol: ftp
           dangerous-clean-slate: false
           exclude: |
             **/.git*
