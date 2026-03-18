@@ -16,7 +16,11 @@ interface Event {
     content?: string;
 }
 
-export const EventsSection: React.FC = () => {
+interface EventsSectionProps {
+    initialEventSlug?: string | null;
+}
+
+export const EventsSection: React.FC<EventsSectionProps> = ({ initialEventSlug }) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
@@ -27,9 +31,9 @@ export const EventsSection: React.FC = () => {
         fetchEvents();
     }, []);
 
-    // Handle deep linking from URL
+    // Handle deep linking when URL changes after initial load
     useEffect(() => {
-        if (!loading && events.length > 0) {
+        if (!loading && events.length > 0 && !initialEventSlug) {
             const eventSlug = searchParams.get('evento');
             if (eventSlug) {
                 const event = events.find(e => e.slug === eventSlug);
@@ -38,7 +42,7 @@ export const EventsSection: React.FC = () => {
                 }
             }
         }
-    }, [loading, events, searchParams]);
+    }, [loading, events, searchParams, initialEventSlug]);
 
     const handleSelectEvent = (event: Event | null) => {
         setSelectedEvent(event);
@@ -85,6 +89,14 @@ export const EventsSection: React.FC = () => {
                     };
                 });
                 setEvents(formattedEvents);
+
+                // Open initial event if slug is provided
+                if (initialEventSlug) {
+                    const event = formattedEvents.find(e => e.slug === initialEventSlug);
+                    if (event) {
+                        setSelectedEvent(event);
+                    }
+                }
             }
         } catch (error) {
             console.error('Error:', error);
