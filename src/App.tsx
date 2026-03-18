@@ -76,6 +76,7 @@ function App() {
       {!isDashboard && !isCoursePlayer && !location.pathname.includes('/admin/course/') && !isAdmin && !isCertificate && <Navbar />}
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/evento/:slug" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/reset-password" element={<ResetPassword />} />
 

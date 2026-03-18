@@ -1,13 +1,15 @@
 import { useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useParams } from 'react-router-dom';
 import { Hero } from '../components/Hero';
 import { EventsSection } from '../components/EventsSection';
 import { ServiceTimes } from '../components/ServiceTimes';
 import { Footer } from '../components/Footer';
 
 export const Home = () => {
+    // Supports /evento/:slug (path-based, prerendered) and ?evento= (legacy query param)
+    const { slug: pathSlug } = useParams<{ slug?: string }>();
     const [searchParams] = useSearchParams();
-    const eventSlug = searchParams.get('evento');
+    const eventSlug = pathSlug || searchParams.get('evento');
 
     useEffect(() => {
         const observerOptions = {

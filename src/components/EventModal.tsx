@@ -56,7 +56,7 @@ export const EventModal: React.FC<EventModalProps> = ({ event, onClose }) => {
         updateMeta('og:title', event.title, true);
         updateMeta('og:description', event.description || 'Confira este evento na IBRENE', true);
         updateMeta('og:image', event.banner || event.image, true);
-        updateMeta('og:url', window.location.href, true);
+        updateMeta('og:url', `${window.location.origin}/evento/${event.slug || ''}`, true);
         updateMeta('twitter:title', event.title);
         updateMeta('twitter:description', event.description || 'Confira este evento na IBRENE');
         updateMeta('twitter:image', event.banner || event.image);
@@ -68,9 +68,7 @@ export const EventModal: React.FC<EventModalProps> = ({ event, onClose }) => {
     }, [event]);
 
     const handleShare = () => {
-        const url = new URL(window.location.href);
-        url.searchParams.set('evento', event.slug || '');
-        const shareUrl = url.toString();
+        const shareUrl = `${window.location.origin}/evento/${event.slug || ''}`;
 
         // Standard clipboard API (requires secure context)
         if (navigator.clipboard && window.isSecureContext) {

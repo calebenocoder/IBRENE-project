@@ -2,12 +2,9 @@
   RewriteEngine On
   RewriteBase /
 
-  # --- Route social media bots through preview.php for dynamic meta tags ---
-  RewriteCond %{HTTP_USER_AGENT} facebookexternalhit|facebot|Twitterbot|WhatsApp|TelegramBot|LinkedInBot|Slackbot|Discordbot [NC]
-  RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteRule ^ /preview.php [L,QSA]
-
-  # --- SPA fallback: serve index.html for all non-file routes ---
+  # --- SPA fallback: serve index.html for all non-file, non-directory routes ---
+  # Prerendered /evento/[slug]/index.html files WILL be served as directories by Apache,
+  # so the !-d condition here correctly lets Apache serve the prerendered file for bots AND users.
   RewriteRule ^index\.html$ - [L]
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
