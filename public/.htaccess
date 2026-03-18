@@ -1,6 +1,13 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
+
+  # --- Route social media bots through preview.php for dynamic meta tags ---
+  RewriteCond %{HTTP_USER_AGENT} facebookexternalhit|facebot|Twitterbot|WhatsApp|TelegramBot|LinkedInBot|Slackbot|Discordbot [NC]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^ /preview.php [L,QSA]
+
+  # --- SPA fallback: serve index.html for all non-file routes ---
   RewriteRule ^index\.html$ - [L]
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
