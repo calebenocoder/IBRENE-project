@@ -36,6 +36,33 @@ export const EventModal: React.FC<EventModalProps> = ({ event, onClose }) => {
         return () => window.removeEventListener('keydown', handleEsc);
     }, [onClose]);
 
+    // Update Meta Tags for Social Media Preview
+    useEffect(() => {
+        const originalTitle = document.title;
+        document.title = `${event.title} | IBRENE`;
+
+        // Update meta tags for preview
+        const updateMeta = (name: string, content: string, property = false) => {
+            let el = document.querySelector(property ? `meta[property="${name}"]` : `meta[name="${name}"]`);
+            if (!el) {
+                el = document.createElement('meta');
+                if (property) el.setAttribute('property', name);
+                else el.setAttribute('name', name);
+                document.head.appendChild(el);
+            }
+            el.setAttribute('content', content);
+        };
+
+        updateMeta('og:title', event.title, true);
+        updateMeta('og:description', event.description || 'Confira este evento na IBRENE', true);
+        updateMeta('og:image', event.banner || event.image, true);
+        updateMeta('description', event.description || 'Confira este evento na IBRENE');
+
+        return () => {
+            document.title = originalTitle;
+        };
+    }, [event]);
+
     const handleShare = () => {
         const url = new URL(window.location.href);
         url.searchParams.set('evento', event.slug || '');
@@ -121,9 +148,7 @@ export const EventModal: React.FC<EventModalProps> = ({ event, onClose }) => {
                         {event.content ? (
                             <div className="rich-text" dangerouslySetInnerHTML={{ 
                                 __html: event.content
-                                    .replace(/&nbsp;/g, ' ')
-                                    .replace(/<p><br><\/p>/g, '')
-                                    .replace(/<br>/g, '') 
+                                    .replace(/&nbsp;/g, ' ') 
                             }} />
                         ) : (
                             <p className="placeholder-text">Detalhes completos em breve.</p>
