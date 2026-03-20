@@ -19,7 +19,10 @@ const SITE_URL     = 'https://ibrene.com.br';
 const FALLBACK_IMG = `${SITE_URL}/favicon.png`;
 
 function slugify(title) {
-    return title.toLowerCase().replace(/\s+/g, '-');
+    // FE uses: title.toLowerCase().replace(/ /g, '-')
+    const slug = title.toLowerCase().replace(/ /g, '-');
+    console.log(`      ↳ Generated slug: "${slug}" for title: "${title}"`);
+    return slug;
 }
 
 function escapeAttr(str = '') {
