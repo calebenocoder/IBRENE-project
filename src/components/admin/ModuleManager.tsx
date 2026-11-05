@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
 import {
   DndContext,
@@ -9,6 +9,7 @@ import {
   useSensors,
   type DragEndEvent,
   type DragOverEvent,
+  type DragStartEvent,
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -74,6 +75,8 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({
   const [newModuleTitle, setNewModuleTitle] = useState('');
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
   const [moduleLessons, setModuleLessons] = useState<Record<string, Lesson[]>>({});
+  const lessonsRef = useRef(moduleLessons);
+  const dragStartRef = useRef<{ lessons: Record<string, Lesson[]>; sourceId: string } | null>(null);
   const [editingModuleId, setEditingModuleId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
 
@@ -107,11 +110,12 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({
     })
   );
 
-  useEffect(() => {
-    modules.forEach(module => fetchLessons(module.id));
-  }, [modules]);
+  const updateLessons = useCallback((next: Record<string, Lesson[]>) => {
+    lessonsRef.current = next;
+    setModuleLessons(next);
+  }, []);
 
-  const fetchLessons = async (moduleId: string) => {
+  const fetchLessons = useCallback(async (moduleId: string) => {
     const { data, error } = await supabase
       .from('lessons')
       .select('*')
@@ -119,9 +123,14 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({
       .order('order_index');
 
     if (!error && data) {
-      setModuleLessons(prev => ({ ...prev, [moduleId]: data }));
+      updateLessons({ ...lessonsRef.current, [moduleId]: data });
     }
-  };
+  }, [updateLessons]);
+
+  const moduleIds = modules.map(module => module.id).join(',');
+  useEffect(() => {
+    if (moduleIds) moduleIds.split(',').forEach(fetchLessons);
+  }, [moduleIds, fetchLessons]);
 
   const handleAddModule = async () => {
     if (!newModuleTitle.trim()) return;
@@ -250,9 +259,20 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({
   };
 
   const findModuleForLesson = (lessonId: string): string | undefined => {
-    return Object.keys(moduleLessons).find(moduleId =>
-      moduleLessons[moduleId]?.some(l => l.id === lessonId)
+    return Object.keys(lessonsRef.current).find(moduleId =>
+      lessonsRef.current[moduleId]?.some(l => l.id === lessonId)
     );
+  };
+
+  const handleDragStart = ({ active }: DragStartEvent) => {
+    if (active.data.current?.type === 'lesson') {
+      dragStartRef.current = { lessons: lessonsRef.current, sourceId: findModuleForLesson(String(active.id)) || '' };
+    }
+  };
+
+  const handleDragCancel = () => {
+    if (dragStartRef.current) updateLessons(dragStartRef.current.lessons);
+    dragStartRef.current = null;
   };
 
   const handleDragOver = (event: DragOverEvent) => {
@@ -280,7 +300,7 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({
     if (!activeModuleId || !overModuleId || activeModuleId === overModuleId) return;
 
     // Move the lesson to the new module in state
-    setModuleLessons(prev => {
+    const next = ((prev: Record<string, Lesson[]>) => {
       const activeItems = prev[activeModuleId] || [];
       const overItems = prev[overModuleId] || [];
 
@@ -289,16 +309,16 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({
 
       let newIndex;
       if (overType === 'module') {
-        newIndex = overItems.length + 1;
+        newIndex = overItems.length;
       } else {
         const isBelowOverItem =
           over &&
           active.rect.current.translated &&
-          active.rect.current.translated.top >
-          over.rect.top + over.rect.height;
+          active.rect.current.translated.top + active.rect.current.translated.height / 2 >
+          over.rect.top + over.rect.height / 2;
 
         const modifier = isBelowOverItem ? 1 : 0;
-        newIndex = overIndex >= 0 ? overIndex + modifier : overItems.length + 1;
+        newIndex = overIndex >= 0 ? overIndex + modifier : overItems.length;
       }
 
       const activeLesson = activeItems[activeIndex];
@@ -318,13 +338,17 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({
           ...prev[overModuleId].slice(newIndex, prev[overModuleId].length)
         ]
       };
-    });
+    })(lessonsRef.current);
+    if (next !== lessonsRef.current) updateLessons(next);
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
 
-    if (!over) return;
+    if (!over) {
+      handleDragCancel();
+      return;
+    }
 
     const activeData = active.data.current;
 
@@ -370,53 +394,44 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({
       const moduleId = findModuleForLesson(activeId);
       if (!moduleId) return;
 
-      const lessons = moduleLessons[moduleId] || [];
+      const lessons = lessonsRef.current[moduleId] || [];
       const oldIndex = lessons.findIndex(l => l.id === activeId);
       const newIndex = lessons.findIndex(l => l.id === overId);
+      const sourceId = dragStartRef.current?.sourceId;
+      const before = dragStartRef.current?.lessons;
+      dragStartRef.current = null;
 
-      // If just dropped in same place (and same list), do nothing
-      // Note: If moved between lists, oldIndex/newIndex might differ, but activeId and overId checks handle it.
-      // Wait, if moved between lists, handleDragOver already updated state.
-      // We just need to persist the CURRENT order of the module it is IN.
-
-      // If we used handleDragOver, the item is ALREADY in the new list in state.
-      // So we just need to reorder if necessary (if drag continued within the new list)
-
-      if (oldIndex !== newIndex) {
+      if (newIndex >= 0 && oldIndex !== newIndex) {
         const reordered = arrayMove(lessons, oldIndex, newIndex);
-        setModuleLessons(prev => ({
-          ...prev,
-          [moduleId]: reordered
-        }));
-
-        // Update the DB with new order AND new module_id for THIS list
-        persistLessonOrder(moduleId, reordered);
-      } else {
-        // Even if index didn't change, if it moved Module, we need to persist!
-        // How do we know if it moved module in dragEnd?
-        // ActiveData still has OLD module_id usually?
-        // Let's rely on the fact that we need to persist the state of the target module.
-        persistLessonOrder(moduleId, lessons);
+        updateLessons({ ...lessonsRef.current, [moduleId]: reordered });
+      }
+      if (before && (sourceId !== moduleId || before[moduleId]?.findIndex(l => l.id === activeId) !== lessonsRef.current[moduleId]?.findIndex(l => l.id === activeId))) {
+        const affected = sourceId && sourceId !== moduleId ? [sourceId, moduleId] : [moduleId];
+        try {
+          for (const id of affected) await persistLessonOrder(id, lessonsRef.current[id] || []);
+        } catch (error) {
+          console.error('Error updating lesson order:', error);
+          updateLessons(before);
+          for (const id of affected) {
+            try {
+              await persistLessonOrder(id, before[id] || []);
+            } catch (rollbackError) {
+              console.error('Error restoring lesson order:', rollbackError);
+            }
+          }
+          await Promise.all(affected.map(fetchLessons));
+          alert('Não foi possível salvar a ordem das aulas. A organização anterior foi restaurada.');
+        }
       }
     }
   };
 
   const persistLessonOrder = async (moduleId: string, lessons: Lesson[]) => {
-    const updates = lessons.map((l, idx) => ({
-      id: l.id,
-      module_id: moduleId, // Ensure we save the correct module_id
-      title: l.title,
-      content_type: l.content_type || 'text',
-      order_index: idx
-    }));
-
-    const { error } = await supabase
-      .from('lessons')
-      .upsert(updates, { onConflict: 'id' });
-
-    if (error) {
-      console.error('Error updating lesson order:', error);
-      fetchLessons(moduleId);
+    for (const [index, lesson] of lessons.entries()) {
+      const { error } = await supabase.from('lessons')
+        .update({ module_id: moduleId, order_index: index })
+        .eq('id', lesson.id);
+      if (error) throw error;
     }
   };
 
@@ -464,7 +479,7 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({
         </Box>
       )}
 
-      <Box sx={{ flex: 1, overflowY: 'auto', p: 1.5 }}>
+      <Box sx={{ flex: 1, minWidth: 0, overflowY: 'auto', p: { xs: 1, sm: 1.5 } }}>
         <DndContext
           sensors={sensors}
           collisionDetection={(args) => {
@@ -485,6 +500,8 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({
             return closestCenter(args);
           }}
           onDragOver={handleDragOver}
+          onDragStart={handleDragStart}
+          onDragCancel={handleDragCancel}
           onDragEnd={handleDragEnd}
           autoScroll={true}
         >
@@ -519,7 +536,7 @@ export const ModuleManager: React.FC<ModuleManagerProps> = ({
                       items={(moduleLessons[module.id] || []).map(l => l.id)}
                       strategy={verticalListSortingStrategy}
                     >
-                      <Box sx={{ pl: 3, mt: 0.5, mb: 1 }}>
+                      <Box sx={{ pl: { xs: 1, sm: 3 }, mt: 0.5, mb: 1 }}>
                         <Stack spacing={0.5}>
                           {moduleLessons[module.id]?.map((lesson) => (
                             <SortableLesson

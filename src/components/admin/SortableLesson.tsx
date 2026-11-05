@@ -51,7 +51,7 @@ export const SortableLesson: React.FC<SortableLessonProps> = ({
     });
 
     const style = {
-        transform: CSS.Transform.toString(transform),
+        transform: CSS.Translate.toString(transform),
         transition,
         opacity: isDragging ? 0.5 : 1,
         position: 'relative' as const,
@@ -71,7 +71,7 @@ export const SortableLesson: React.FC<SortableLessonProps> = ({
                 px: 1.5,
                 borderRadius: 2,
                 cursor: 'pointer',
-                transition: 'all 0.2s',
+                transition: 'background-color 0.2s, border-color 0.2s',
                 bgcolor: isSelected ? 'primary.50' : 'transparent',
                 border: '1px solid',
                 borderColor: isSelected ? 'primary.100' : 'transparent',
@@ -86,12 +86,14 @@ export const SortableLesson: React.FC<SortableLessonProps> = ({
             <Box
                 {...attributes}
                 {...listeners}
+                aria-label={`Mover ${lesson.title}`}
                 className="drag-handle-lesson"
                 sx={{
                     display: 'flex',
                     color: 'grey.300',
                     cursor: 'grab',
-                    opacity: 0,
+                    opacity: { xs: 1, sm: 0 },
+                    touchAction: 'none',
                     transition: 'opacity 0.2s',
                     '&:active': { cursor: 'grabbing' }
                 }}

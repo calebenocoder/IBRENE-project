@@ -87,7 +87,7 @@ export const SortableModule: React.FC<SortableModuleProps> = ({
     });
 
     const style = {
-        transform: CSS.Transform.toString(transform),
+        transform: CSS.Translate.toString(transform),
         transition,
         opacity: isDragging ? 0.5 : 1,
         position: 'relative' as const,
@@ -112,7 +112,7 @@ export const SortableModule: React.FC<SortableModuleProps> = ({
                     borderWidth: isSelected ? 2 : 1,
                     borderColor: isSelected ? 'primary.main' : 'divider',
                     bgcolor: isSelected ? 'grey.50' : 'background.paper',
-                    transition: 'all 0.2s',
+                    transition: 'border-color 0.2s, background-color 0.2s',
                     overflow: 'hidden',
                     '&:hover': {
                         borderColor: isSelected ? 'primary.main' : 'grey.400',
@@ -144,30 +144,31 @@ export const SortableModule: React.FC<SortableModuleProps> = ({
                 ) : (
                     <Stack
                         direction="row"
-                        spacing={1}
-                        sx={{ p: 1.5, alignItems: 'center', cursor: 'pointer' }}
+                        spacing={{ xs: 0.5, sm: 1 }}
+                        sx={{ p: { xs: 1, sm: 1.5 }, alignItems: 'center', cursor: 'pointer' }}
                         onClick={onSelect}
                     >
                         <Stack
                             direction="row"
                             alignItems="center"
-                            onClick={(e) => { e.stopPropagation(); onToggleExpand(); }}
                             sx={{ color: 'grey.500', '&:hover': { color: 'primary.main' } }}
                         >
-                            <Box {...attributes} {...listeners} sx={{ cursor: 'grab', display: 'flex', mr: 0.5 }}>
+                            <Box {...attributes} {...listeners} aria-label={`Mover ${module.title}`} sx={{ cursor: 'grab', touchAction: 'none', display: 'flex', mr: 0.5 }}>
                                 <DragIcon fontSize="small" />
                             </Box>
-                            {isExpanded ? <ExpandIcon /> : <ChevronIcon />}
+                            <Box component="button" type="button" aria-label={isExpanded ? 'Recolher módulo' : 'Expandir módulo'} onClick={(e) => { e.stopPropagation(); onToggleExpand(); }} sx={{ border: 0, background: 'none', color: 'inherit', cursor: 'pointer', display: 'flex', p: 0 }}>
+                                {isExpanded ? <ExpandIcon /> : <ChevronIcon />}
+                            </Box>
                         </Stack>
 
                         <Typography
                             variant="subtitle2"
-                            sx={{ flex: 1, fontWeight: 700, color: 'text.primary' }}
+                            sx={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere', fontWeight: 700, color: 'text.primary' }}
                         >
                             {module.title}
                         </Typography>
 
-                        <Stack direction="row" spacing={0.5} className="module-actions" sx={{ opacity: { xs: 1, sm: 0 }, transition: 'opacity 0.2s' }}>
+                        <Stack direction="row" spacing={0.5} className="module-actions" sx={{ flexShrink: 0, opacity: { xs: 1, sm: 0 }, transition: 'opacity 0.2s', '& .MuiIconButton-root': { width: { xs: 28, sm: 34 }, height: { xs: 28, sm: 34 } } }}>
                             <Tooltip title="Adicionar Aula/Quiz">
                                 <IconButton size="small" color="primary" onClick={handleMenuClick}>
                                     <AddIcon fontSize="small" />

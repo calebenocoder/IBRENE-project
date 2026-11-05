@@ -127,6 +127,7 @@ export const CourseBuilder: React.FC = () => {
   const handleModulesChange = (newModules?: any[]) => {
     if (newModules) {
       setModules(newModules);
+      return;
     }
     fetchModules();
   };
@@ -288,6 +289,7 @@ export const CourseBuilder: React.FC = () => {
 
       <style>{`
         .course-builder {
+          --editor-gutter: clamp(1rem, 3vw, 1.5rem);
           min-height: 100vh;
           background: #f8fafc;
           padding-top: 220px;
@@ -321,9 +323,15 @@ export const CourseBuilder: React.FC = () => {
         }
 
         @media (max-width: 640px) {
-          .builder-header {
-            padding: 16px 16px 12px;
+          .course-builder {
+            padding-top: 0;
           }
+
+          .builder-header {
+            position: relative;
+            padding: 16px var(--editor-gutter) 12px;
+          }
+
         }
 
         .header-content {
@@ -489,31 +497,37 @@ export const CourseBuilder: React.FC = () => {
 
         .builder-layout {
           display: grid;
-          grid-template-columns: 380px 1fr;
+          grid-template-columns: 380px minmax(0, 1fr);
           max-width: 1400px;
           margin: 0 auto;
           gap: 32px;
-          padding: 0 24px 40px;
-          align-items: start;
+          padding: 0 var(--editor-gutter) 40px;
+          align-items: stretch;
         }
 
         @media (max-width: 1024px) {
           .builder-layout {
-            grid-template-columns: 1fr;
+            grid-template-columns: minmax(0, 1fr);
             gap: 20px;
-            padding: 0 16px 40px;
+            padding-bottom: 40px;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .builder-layout {
+            padding-top: 24px;
           }
         }
 
         .modules-sidebar {
+          min-width: 0;
           background: white;
           border-radius: 16px;
           padding: 24px;
           box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-          height: fit-content;
-          position: sticky;
-          top: 220px;
-          max-height: calc(100vh - 260px);
+          height: 100%;
+          position: relative;
+          top: 0;
           overflow-y: auto;
           width: 100%;
         }
@@ -527,7 +541,14 @@ export const CourseBuilder: React.FC = () => {
           }
         }
 
+        @media (max-width: 640px) {
+          .modules-sidebar {
+            padding: 12px;
+          }
+        }
+
         .content-editor {
+          min-width: 0;
           background: white;
           border-radius: 16px;
           padding: 40px;
@@ -540,12 +561,6 @@ export const CourseBuilder: React.FC = () => {
           .content-editor {
             padding: 24px;
             min-height: auto;
-          }
-        }
-
-        @media (max-width: 1024px) {
-          .builder-layout {
-            grid-template-columns: 1fr;
           }
         }
 
