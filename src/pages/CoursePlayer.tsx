@@ -1311,7 +1311,7 @@ export const CoursePlayer: React.FC = () => {
 
         .progress-list {
           display: grid;
-          grid-template-columns: repeat(5, 1fr);
+          grid-template-columns: repeat(auto-fill, 32px);
           gap: 8px;
         }
 
