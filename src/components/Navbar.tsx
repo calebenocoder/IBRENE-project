@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.png';
+import homeLogo from '../assets/ibrene-home-logo.svg';
 import { supabase } from '../lib/supabase';
 
 export const Navbar: React.FC = () => {
@@ -44,7 +45,7 @@ export const Navbar: React.FC = () => {
     <nav className={`navbar ${scrolled ? 'scrolled' : ''} ${location.pathname === '/dashboard' ? 'navbar-dashboard' : ''}`}>
       <div className="container flex items-center justify-between">
         <Link to="/" className="logo">
-          <img src={logo} alt="IBRENE Logo" />
+          <img src={location.pathname === '/' ? homeLogo : logo} alt="IBRENE Logo" />
         </Link>
 
         {/* Navigation Links */}

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import logo from '../assets/logo.png';
+import logo from '../assets/ibrene-courses-logo.svg';
 import { ModuleManager } from '../components/admin/ModuleManager';
 import { LessonEditor } from '../components/admin/LessonEditor';
 import { TestEditor } from '../components/admin/TestEditor';
@@ -350,7 +350,7 @@ export const CourseBuilder: React.FC = () => {
         }
 
         .header-logo {
-          height: 40px;
+          height: 64px;
           object-fit: contain;
           margin-top: 10px;
           max-width: 120px;
@@ -358,7 +358,7 @@ export const CourseBuilder: React.FC = () => {
 
         @media (max-width: 640px) {
           .header-logo {
-            height: 30px;
+            height: 48px;
             margin-top: 0;
             max-width: 80px;
           }

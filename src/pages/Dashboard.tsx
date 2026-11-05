@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useNavigate, Link } from 'react-router-dom';
-import logo from '../assets/logo.png';
+import logo from '../assets/ibrene-courses-logo.svg';
 import { CertificateModal } from '../components/CertificateModal';
 import { UserSettingsModal } from '../components/UserSettingsModal';
 import {
@@ -207,7 +207,7 @@ export const Dashboard: React.FC = () => {
         <Container maxWidth="lg">
           <Toolbar disableGutters sx={{ justifyContent: 'space-between' }}>
             <Stack direction="row" alignItems="center" component={Link} to="/" sx={{ textDecoration: 'none' }}>
-              <img src={logo} alt="IBRENE Logo" style={{ height: 40, width: 'auto' }} />
+              <img src={logo} alt="IBRENE Logo" style={{ height: 64, width: 'auto' }} />
             </Stack>
 
             <Stack direction="row" spacing={2} alignItems="center">

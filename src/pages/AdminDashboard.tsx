@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { CourseModal } from '../components/CourseModal';
 import { SiteManager } from '../components/admin/SiteManager';
 import { PostsManager } from '../components/admin/PostsManager'; // New Import
-import logo from '../assets/logo.png';
+import logo from '../assets/ibrene-courses-logo.svg';
 
 interface Course {
   id: string;
@@ -161,7 +161,7 @@ export const AdminDashboard: React.FC = () => {
           <Toolbar disableGutters sx={{ py: { xs: 3, sm: 1 }, flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center', gap: { xs: 3, sm: 0 } }}>
             {/* Left Side */}
             <Stack direction="row" alignItems="center" spacing={2} sx={{ width: { xs: '100%', sm: 'auto' }, justifyContent: { xs: 'center', sm: 'flex-start' } }}>
-              <img src={logo} alt="IBRENE" style={{ height: 32, width: 'auto' }} />
+              <img src={logo} alt="IBRENE" style={{ height: 64, width: 'auto' }} />
               <Typography variant="h6" component="h1" sx={{ color: 'text.primary', borderLeft: 1, borderColor: 'divider', pl: 2, display: { xs: 'none', sm: 'block' } }}>
                 Painel Administrativo
               </Typography>
