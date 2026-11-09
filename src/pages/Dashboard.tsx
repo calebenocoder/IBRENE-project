@@ -75,8 +75,8 @@ export const Dashboard: React.FC = () => {
 
         setIsAdmin(
           profile?.role === 'admin' ||
-          user.user_metadata?.is_admin === true ||
-          user.app_metadata?.role === 'admin'
+          user.app_metadata?.role === 'admin' ||
+          user.app_metadata?.is_admin === true
         );
         const displayedName = profile?.full_name || user.user_metadata?.full_name || 'Estudante';
         setUserName(displayedName);

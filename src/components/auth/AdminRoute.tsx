@@ -21,8 +21,8 @@ export const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
                 }
 
                 // 1. Quick check via JWT metadata
-                let adminStatus = user.user_metadata?.is_admin === true ||
-                    user.app_metadata?.role === 'admin';
+                let adminStatus = user.app_metadata?.role === 'admin' ||
+                    user.app_metadata?.is_admin === true;
 
                 // 2. Verified check via database profile
                 if (!adminStatus) {
